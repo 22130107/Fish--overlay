@@ -23,7 +23,7 @@
 - Consumes: `fish.sizeCm` (number), `fish.tuTien.auraColor` (string)
 - Produces: Updated JSX element displaying `{fish.sizeCm}cm`
 
-- [ ] **Step 1: Update `src/components/live-overlay.tsx`**
+- [x] **Step 1: Update `src/components/live-overlay.tsx`**
 
 Replace:
 ```tsx
@@ -44,12 +44,12 @@ With:
                 </span>
 ```
 
-- [ ] **Step 2: Verify build and test suite**
+- [x] **Step 2: Verify build and test suite**
 
 Run: `npm run build` and `npm test`
 Expected: Build passes with 0 errors and all unit tests pass.
 
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
 
 ```bash
 git add src/components/live-overlay.tsx
