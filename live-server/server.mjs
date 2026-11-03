@@ -560,6 +560,8 @@ function resolveTribulation(success) {
     t: 'tribulation_resolve',
     success: Boolean(success),
     targetFishId,
+    ownerName,
+    targetCm,
   });
 
   const fish = viewerFish.get(targetFishId);
@@ -945,6 +947,34 @@ const server = http.createServer((req, res) => {
         const name = params.name || params.ownerName || 'Đạo hữu Test';
         const id = params.id || params.targetFishId || 'test_fish_1';
         const avatar = params.avatar || '';
+
+        let fish = viewerFish.get(id);
+        if (!fish) {
+          fish = {
+            id,
+            user: name,
+            avatar,
+            eatCount: targetCm >= 82 ? 124 : 104,
+            sizeCm: targetCm,
+            passed72: false,
+            passed82: false,
+            lastFed: Date.now(),
+          };
+          viewerFish.set(id, fish);
+        } else {
+          fish.user = name;
+          fish.eatCount = Math.max(fish.eatCount, targetCm >= 82 ? 124 : 104);
+          fish.sizeCm = targetCm;
+        }
+
+        // Guarantee fish is spawned in all connected ponds
+        broadcast({
+          t: 'join',
+          id,
+          user: name,
+          avatar,
+        });
+
         const trib = startTribulation(id, name, avatar, targetCm);
         res.writeHead(200);
         res.end(JSON.stringify({
@@ -957,6 +987,60 @@ const server = http.createServer((req, res) => {
             currentPower: trib.currentPower,
             timeLeft: trib.timeLeft,
           },
+        }));
+        return;
+      }
+
+      if (action === 'instant_dragon') {
+        const name = params.name || 'Thái Cổ Chân Long';
+        const id = params.id || 'test_dragon_1';
+        const avatar = params.avatar || '';
+
+        let fish = viewerFish.get(id);
+        if (!fish) {
+          fish = {
+            id,
+            user: name,
+            avatar,
+            eatCount: 130,
+            sizeCm: 85.0,
+            passed72: true,
+            passed82: true,
+            lastFed: Date.now(),
+          };
+          viewerFish.set(id, fish);
+        } else {
+          fish.passed72 = true;
+          fish.passed82 = true;
+          fish.eatCount = Math.max(fish.eatCount, 130);
+          fish.sizeCm = 85.0;
+        }
+
+        // Broadcast join so all pond clients have the fish
+        broadcast({
+          t: 'join',
+          id,
+          user: name,
+          avatar,
+        });
+
+        // Broadcast instant dragon transformation
+        broadcast({
+          t: 'instant_dragon',
+          id,
+          name,
+          avatar,
+        });
+
+        addLog(`🐉 CHÂN LONG XUẤT THẾ: Đạo hữu ${name} đã hóa thân thành Hoàng Kim Chân Long!`);
+
+        const spokenName = cleanSpokenName(name);
+        say(`Kính báo toàn thể thiên hạ! Đạo hữu ${spokenName} đã hóa thân thành Hoàng Kim Chân Long, uy chấn bát hoang!`, { tag: 'tribulation', priority: true }, true);
+
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          dragon: { id, name, sizeCm: 85.0 }
         }));
         return;
       }

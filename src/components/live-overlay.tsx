@@ -210,12 +210,27 @@ export function LiveOverlay({
                   </div>
                 )}
                 <span className="fish-owner-name">{fish.ownerName}</span>
-                <span
-                  className="fish-size-pill tu-tien-tag"
-                  style={{ borderColor: fish.tuTien.auraColor }}
-                >
-                  {fish.sizeCm}cm
-                </span>
+                {fish.isDragon ? (
+                  <span
+                    className="fish-size-pill dragon-tag"
+                    style={{
+                      background: "linear-gradient(135deg, #f59e0b, #ef4444)",
+                      color: "#fff",
+                      borderColor: "#fbbf24",
+                      boxShadow: "0 0 8px rgba(245, 158, 11, 0.7)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    🐉 {fish.sizeCm}cm • Chân Long
+                  </span>
+                ) : (
+                  <span
+                    className="fish-size-pill tu-tien-tag"
+                    style={{ borderColor: fish.tuTien.auraColor }}
+                  >
+                    {fish.sizeCm}cm
+                  </span>
+                )}
               </div>
 
               {/* Floating Size Popup when user comments 'size' (Tu Tiên Style) */}

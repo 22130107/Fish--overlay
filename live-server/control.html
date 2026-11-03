@@ -198,6 +198,9 @@
           <button class="secondary" style="background: #065f46; color: #a7f3d0;" onclick="resolveTribulationNow(true)">🏆 Thắng Ngay</button>
           <button class="danger" onclick="resolveTribulationNow(false)">🌩️ Thua Ngay</button>
         </div>
+        <button class="gold" style="background: linear-gradient(135deg, #f59e0b, #dc2626); color: #fff; font-weight: 700; width: 100%; margin-bottom: 12px; padding: 10px 14px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);" onclick="instantSpawnDragon()">
+          <span>🐉</span> <span>Biến 1 Con Thành Rồng Ngay (Test Nhanh Không Chờ Kiếp)</span>
+        </button>
         <div id="tribulationInfoBox" style="font-size: 12px; background: #060e0d; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--card-border); color: #cbd5e1; display: none;">
           <div style="margin-bottom: 4px;"><b>Đạo hữu:</b> <span id="tribOwner">-</span> (<span id="tribCm">72</span>cm)</div>
           <div><b>Lực Hộ Pháp:</b> <span id="tribPower">0</span> / <span id="tribRequired">40</span></div>
@@ -491,6 +494,22 @@
         }
       } catch (err) {
         appendLog(`❌ Lỗi kết thúc kiếp: ${err.message}`);
+      }
+    }
+
+    async function instantSpawnDragon() {
+      try {
+        const res = await fetch('/api/tribulation/instant_dragon?name=Thái+Cổ+Chân+Long', {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          appendLog('🐉 Đã hóa thân thành Hoàng Kim Chân Long ngay lập tức!');
+        } else {
+          appendLog(`❌ Lỗi: ${data.error}`);
+        }
+      } catch (err) {
+        appendLog(`❌ Lỗi gọi hóa rồng: ${err.message}`);
       }
     }
 

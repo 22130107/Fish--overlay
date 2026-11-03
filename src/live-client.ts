@@ -102,8 +102,35 @@ export class LiveClient {
     this.tribulation.onStart = (st) => {
       this.state.tribulation = { ...st };
       this.school.tribulation = { ...st };
+
+      // Ensure target fish exists in pond
+      let fish = this.school.fish
+        .slice(0, this.school.count)
+        .find(
+          (f) =>
+            f.ownerId === st.targetFishId ||
+            (f.ownerName && f.ownerName.toLowerCase() === st.ownerName.toLowerCase())
+        );
+
+      if (!fish) {
+        fish = this.school.spawnFishForViewer(st.targetFishId, st.ownerName, st.ownerAvatar);
+      }
+
+      if (fish) {
+        fish.ownerId = st.targetFishId;
+        fish.ownerName = st.ownerName;
+        fish.ownerAvatar = st.ownerAvatar || fish.ownerAvatar;
+        fish.hunger = 100;
+        fish.hungerTimeLeft = fish.maxHungerTime;
+        if (st.targetCm >= 82) {
+          fish.eatCount = Math.max(fish.eatCount, 124);
+        } else if (st.targetCm >= 72) {
+          fish.eatCount = Math.max(fish.eatCount, 104);
+        }
+      }
+
       this.pushEventAlert(
-        `⚡ THIÊN KIẾP! Cá của ${st.ownerName} đang nghênh đón lôi kiếp!`,
+        `⚡ THIÊN KIẾP! Cá của ${st.ownerName} (${st.targetCm}cm) đang nghênh đón lôi kiếp!`,
         "info"
       );
       this.notify();
@@ -118,14 +145,36 @@ export class LiveClient {
     this.tribulation.onSuccess = (st) => {
       this.state.tribulation = { ...st };
       this.school.tribulation = null;
-      const fish = this.school.fish
+      let fish = this.school.fish
         .slice(0, this.school.count)
-        .find((f) => f.ownerId === st.targetFishId);
+        .find(
+          (f) =>
+            f.ownerId === st.targetFishId ||
+            (f.ownerName && f.ownerName.toLowerCase() === st.ownerName.toLowerCase())
+        );
+
+      if (!fish) {
+        fish =
+          this.school.spawnFishForViewer(st.targetFishId, st.ownerName, st.ownerAvatar) ||
+          this.school.fish[0];
+      }
 
       if (fish) {
+        fish.ownerId = st.targetFishId;
+        fish.ownerName = st.ownerName;
+        fish.ownerAvatar = st.ownerAvatar || fish.ownerAvatar;
+        fish.hunger = 100;
+        fish.hungerTimeLeft = fish.maxHungerTime;
+        fish.eatCount += 3; // +1.5cm bonus
+
         if (st.targetCm >= 82) {
           fish.passedTribulation82 = true;
+          fish.passedTribulation72 = true;
           fish.tribulationAura = "dragon";
+          fish.eatCount = Math.max(fish.eatCount, 130);
+          const dragonGrowth = 1 + Math.min(1.2, fish.eatCount * 0.015);
+          fish.bodyLength = 34 * dragonGrowth;
+          fish.bodyWidth = fish.bodyLength * 0.18;
           (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
           this.school.ripples.trigger("touch", fish.position);
           const t1 = setTimeout(() => this.school.ripples.trigger("touch", fish.position), 150);
@@ -135,9 +184,6 @@ export class LiveClient {
           fish.passedTribulation72 = true;
           fish.tribulationAura = "dragon";
         }
-        fish.hunger = 100;
-        fish.hungerTimeLeft = fish.maxHungerTime;
-        fish.eatCount += 3; // +1.5cm bonus
       }
 
       // Trigger celebratory rain of 30 food pellets
@@ -148,19 +194,24 @@ export class LiveClient {
       }
       this.school.callTo(vec(CANVAS_WIDTH * 0.5, CANVAS_HEIGHT * 0.5));
 
-      this.pushEventAlert(
-        `🎉 CHÚC MỪNG! ${st.ownerName} đã độ kiếp thành công hóa Chân Long!`,
-        "size"
-      );
+      const alertMsg =
+        st.targetCm >= 82
+          ? `🎉 CHÚC MỪNG! ${st.ownerName} đã độ kiếp thành công hóa Hoàng Kim Chân Long!`
+          : `🎉 CHÚC MỪNG! ${st.ownerName} đã độ kiếp thành công vượt 72cm!`;
+      this.pushEventAlert(alertMsg, "size");
       this.notify();
     };
 
     this.tribulation.onFail = (st) => {
       this.state.tribulation = { ...st };
       this.school.tribulation = null;
-      const fish = this.school.fish
+      let fish = this.school.fish
         .slice(0, this.school.count)
-        .find((f) => f.ownerId === st.targetFishId);
+        .find(
+          (f) =>
+            f.ownerId === st.targetFishId ||
+            (f.ownerName && f.ownerName.toLowerCase() === st.ownerName.toLowerCase())
+        );
 
       if (fish) {
         fish.eatCount = Math.max(0, fish.eatCount - 4); // -2.0cm penalty
@@ -493,17 +544,102 @@ export class LiveClient {
         this.school.scatter();
         break;
 
-      case "tribulation_start":
-        this.tribulation.start(msg.targetFishId, msg.ownerName, msg.ownerAvatar, msg.targetCm);
+      case "tribulation_start": {
+        let startFish = this.school.fish
+          .slice(0, this.school.count)
+          .find(
+            (f) =>
+              f.ownerId === msg.targetFishId ||
+              (f.ownerName && f.ownerName.toLowerCase() === msg.ownerName.toLowerCase())
+          );
+        if (!startFish) {
+          startFish = this.school.spawnFishForViewer(
+            msg.targetFishId,
+            msg.ownerName,
+            msg.ownerAvatar
+          );
+        }
+        if (startFish) {
+          startFish.ownerId = msg.targetFishId;
+          startFish.ownerName = msg.ownerName;
+          startFish.ownerAvatar = msg.ownerAvatar || startFish.ownerAvatar;
+          startFish.hunger = 100;
+          startFish.hungerTimeLeft = startFish.maxHungerTime;
+          if (msg.targetCm >= 82) {
+            startFish.eatCount = Math.max(startFish.eatCount, 124);
+          } else if (msg.targetCm >= 72) {
+            startFish.eatCount = Math.max(startFish.eatCount, 104);
+          }
+        }
+        this.tribulation.start(
+          msg.targetFishId,
+          msg.ownerName,
+          msg.ownerAvatar,
+          msg.targetCm
+        );
         break;
+      }
 
       case "tribulation_power":
         this.tribulation.addPower(msg.source, msg.user, msg.points, msg.avatar);
         break;
 
-      case "tribulation_resolve":
-        this.tribulation.resolve(msg.success);
+      case "tribulation_resolve": {
+        const wasActive = this.tribulation.state.active;
+        const st = { ...this.tribulation.state };
+        if (msg.targetFishId && !st.targetFishId) st.targetFishId = msg.targetFishId;
+        if (msg.ownerName && !st.ownerName) st.ownerName = msg.ownerName;
+        if (msg.targetCm && !st.targetCm) st.targetCm = msg.targetCm;
+        if (wasActive) {
+          this.tribulation.resolve(msg.success);
+        } else if (msg.success) {
+          this.tribulation.onSuccess?.(st);
+        }
         break;
+      }
+
+      case "instant_dragon": {
+        const id = msg.id || "dragon_test_1";
+        const name = msg.name || "Thái Cổ Chân Long";
+        const avatar = msg.avatar || "";
+        let dragonFish = this.school.fish
+          .slice(0, this.school.count)
+          .find(
+            (f) =>
+              f.ownerId === id ||
+              (f.ownerName && f.ownerName.toLowerCase() === name.toLowerCase())
+          );
+        if (!dragonFish) {
+          dragonFish =
+            this.school.spawnFishForViewer(id, name, avatar) || this.school.fish[0];
+        }
+        if (dragonFish) {
+          dragonFish.ownerId = id;
+          dragonFish.ownerName = name;
+          dragonFish.ownerAvatar = avatar || dragonFish.ownerAvatar;
+          dragonFish.eatCount = Math.max(dragonFish.eatCount, 130);
+          dragonFish.passedTribulation82 = true;
+          dragonFish.passedTribulation72 = true;
+          dragonFish.tribulationAura = "dragon";
+          dragonFish.hunger = 100;
+          dragonFish.hungerTimeLeft = dragonFish.maxHungerTime;
+          const dragonGrowth = 1 + Math.min(1.2, dragonFish.eatCount * 0.015);
+          dragonFish.bodyLength = 34 * dragonGrowth;
+          dragonFish.bodyWidth = dragonFish.bodyLength * 0.18;
+          (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
+          this.school.ripples.trigger("touch", dragonFish.position);
+          const t1 = setTimeout(() => this.school.ripples.trigger("touch", dragonFish.position), 150);
+          const t2 = setTimeout(() => this.school.ripples.trigger("touch", dragonFish.position), 300);
+          this.transformationTimers.push(t1, t2);
+
+          this.pushEventAlert(
+            `🐉 CHÂN LONG XUẤT THẾ! ${name} đã hóa thân thành Hoàng Kim Chân Long!`,
+            "size"
+          );
+          this.notify();
+        }
+        break;
+      }
     }
   }
 
