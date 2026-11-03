@@ -1286,3 +1286,916 @@ input[type="color"] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================================= Live Stream Overlay */
+.live-overlay-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+/* Thiên Kiếp & Lôi Đình Banner HUD */
+.live-tribulation-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 460px;
+  background: radial-gradient(135% 100% at 50% 0%, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.94) 100%);
+  border: 2px solid #818cf8;
+  border-radius: 16px;
+  box-shadow:
+    0 0 25px rgba(99, 102, 241, 0.45),
+    0 0 50px rgba(168, 85, 247, 0.3),
+    0 12px 30px rgba(0, 0, 0, 0.7),
+    inset 0 0 15px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(10px);
+  z-index: 25;
+  overflow: hidden;
+  animation: tribulation-banner-pulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes tribulation-banner-pulse {
+  0% {
+    box-shadow:
+      0 0 20px rgba(99, 102, 241, 0.4),
+      0 0 40px rgba(168, 85, 247, 0.25),
+      0 12px 30px rgba(0, 0, 0, 0.7),
+      inset 0 0 10px rgba(56, 189, 248, 0.15);
+    border-color: #818cf8;
+  }
+  100% {
+    box-shadow:
+      0 0 35px rgba(56, 189, 248, 0.7),
+      0 0 60px rgba(192, 132, 252, 0.5),
+      0 12px 30px rgba(0, 0, 0, 0.7),
+      inset 0 0 20px rgba(56, 189, 248, 0.35);
+    border-color: #38bdf8;
+  }
+}
+
+.tribulation-header {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(147, 51, 234, 0.4), rgba(56, 189, 248, 0.2));
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.35);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fef08a;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.8), 0 0 20px rgba(168, 85, 247, 0.6);
+}
+
+.thunder-icon {
+  font-size: 16px;
+  display: inline-block;
+  animation: thunder-flicker 1.2s infinite ease-in-out alternate;
+}
+
+@keyframes thunder-flicker {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px #fef08a);
+  }
+  50% {
+    transform: scale(1.35) rotate(-5deg);
+    filter: drop-shadow(0 0 12px #38bdf8);
+  }
+}
+
+.tribulation-title {
+  text-align: center;
+}
+
+.tribulation-body {
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tribulation-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tribulation-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+  flex-shrink: 0;
+}
+
+.tribulation-avatar-fallback {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.2);
+  border: 2px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.tribulation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tribulation-target-name {
+  font-size: 13px;
+  color: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tribulation-realm-pill {
+  font-size: 11px;
+  color: #c084fc;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.tribulation-timer {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fef08a;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(254, 240, 138, 0.3);
+  padding: 4px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease-out;
+}
+
+.tribulation-timer.timer-urgent {
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.4);
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+  animation: timer-pulse-urgent 0.5s infinite alternate ease-in-out;
+}
+
+@keyframes timer-pulse-urgent {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 1);
+  }
+}
+
+.tribulation-bar-wrap {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 11px;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+.tribulation-bar-fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #a855f7, #38bdf8);
+  background-size: 250% 100%;
+  border-radius: 11px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
+  animation: electric-shimmer 2.5s linear infinite;
+}
+
+@keyframes electric-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0% 0; }
+}
+
+.bar-sparkle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: sparkle-sweep 1.2s infinite ease-in-out alternate;
+}
+
+@keyframes sparkle-sweep {
+  0% { opacity: 0.4; transform: scaleX(0.8); }
+  100% { opacity: 1; transform: scaleX(1.3); }
+}
+
+.tribulation-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.03em;
+}
+
+.tribulation-contributors {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.contributors-label {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.contributors-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tribulation-contributor-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #e0f2fe;
+  font-weight: 600;
+  font-size: 11px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.tribulation-call-action {
+  font-size: 11px;
+  color: #fed7aa;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px dashed rgba(251, 191, 36, 0.35);
+  letter-spacing: 0.02em;
+}
+
+.live-pellets-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.live-food-pellet {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.2s ease-out;
+}
+
+.food-dot {
+  width: 10px;
+  height: 10px;
+  background: #f59e0b;
+  border: 2px solid #78350f;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #f59e0b, 0 0 4px #fff;
+  animation: food-pulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes food-pulse {
+  from { transform: scale(0.9); }
+  to { transform: scale(1.25); }
+}
+
+.food-user-tag {
+  margin-top: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fef08a;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.live-floating-alert {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: #a7f3d0;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Top Donors Card */
+.live-donors-card {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+.donors-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  padding-bottom: 4px;
+}
+
+.donors-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.donor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.donor-rank { font-weight: 700; color: #94a3b8; }
+.donor-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f8fafc; }
+.donor-coins { font-weight: 600; color: #f59e0b; }
+
+/* Gift Alert Banner */
+.live-gift-banner {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(180, 83, 9, 0.95), rgba(69, 26, 3, 0.95));
+  border: 2px solid #fbbf24;
+  border-radius: 18px;
+  padding: 20px 32px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(245, 158, 11, 0.5), 0 10px 30px rgba(0, 0, 0, 0.7);
+  animation: gift-pop 0.5s cubic-bezier(0.18, 1.25, 0.4, 1);
+  min-width: 280px;
+}
+
+@keyframes gift-pop {
+  from { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.gift-badge {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #fef08a;
+  margin-bottom: 6px;
+}
+
+.gift-user {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.gift-desc {
+  font-size: 15px;
+  color: #fed7aa;
+  margin: 6px 0;
+}
+
+.gift-diamonds {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+/* Bottom Guidance Dock */
+.live-bottom-dock {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: max-content;
+  max-width: 95vw;
+}
+
+.live-status-pill,
+.live-instruction-pill {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #e2e8f0;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.live-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.live-status-dot.connected {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+/* ========================================================= Live Fish Nametag & Hunger */
+.live-fish-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.live-fish-nametag {
+  position: absolute;
+  transform: translate(-50%, -130%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.1s linear;
+  z-index: 10;
+}
+
+.fish-owner-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1.5px solid rgba(16, 185, 129, 0.6);
+  padding: 2px 7px 2px 4px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.fish-owner-pill.pill-danger {
+  border-color: #ef4444;
+  background: rgba(69, 10, 10, 0.9);
+  animation: pulse-danger 0.8s infinite alternate;
+}
+
+@keyframes pulse-danger {
+  from { transform: scale(0.95); }
+  to { transform: scale(1.08); }
+}
+
+.fish-owner-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.fish-owner-avatar-fallback {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #059669;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fish-owner-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f8fafc;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fish-size-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.22);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 999px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+
+.fish-size-pill.tu-tien-tag {
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+/* Floating Size Ruler & Tu Tiên Talisman Popup */
+.fish-size-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.55), 0 8px 24px rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  padding: 8px 14px;
+  min-width: 140px;
+  z-index: 40;
+  pointer-events: none;
+  animation: size-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tu-tien-popup {
+  min-width: 175px;
+  background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), 0 12px 32px rgba(0, 0, 0, 0.8);
+  border-width: 2px;
+}
+
+.tu-tien-header {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tu-tien-realm-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px currentColor;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.tu-tien-length {
+  font-size: 22px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
+  line-height: 1.1;
+  margin: 1px 0 3px;
+}
+
+.tu-tien-honorific {
+  font-size: 11px;
+  color: #fed7aa;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.tu-tien-honorific b {
+  color: #fde047;
+}
+
+.tu-tien-progress-wrap {
+  width: 100%;
+  margin: 4px 0 6px;
+}
+
+.tu-tien-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 3px;
+}
+
+.tu-tien-progress-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tu-tien-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease-out;
+}
+
+.tu-tien-eaten {
+  font-size: 10px;
+  color: #cbd5e1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@keyframes size-pop {
+  from { opacity: 0; transform: translate(-50%, 12px) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.ruler-header {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7dd3fc;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.ruler-length {
+  font-size: 20px;
+  font-weight: 900;
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+  line-height: 1.1;
+  margin: 1px 0 3px;
+}
+
+.ruler-rank {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.ruler-eaten {
+  font-size: 10px;
+  color: #cbd5e1;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.ruler-arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid #38bdf8;
+}
+
+.fish-breed-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: #fde047;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(253, 224, 71, 0.3);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+.fish-hunger-bar-bg {
+  width: 38px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  margin-top: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.fish-hunger-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.2s linear;
+}
+
+.fill-healthy { background: #10b981; }
+.fill-warning { background: #f59e0b; }
+.fill-danger  { background: #ef4444; }
+
+.fish-hunger-alert {
+  font-size: 9px;
+  font-weight: 700;
+  color: #f87171;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  margin-top: 1px;
+}
+
+/* Fishing Hook animation */
+.fishing-hook-container {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fishing-hook-line {
+  width: 1.5px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.fishing-hook-icon {
+  font-size: 20px;
+  margin-top: -6px;
+  animation: hook-bounce 0.4s infinite alternate;
+}
+
+@keyframes hook-bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+.live-fish-nametag.being-fished {
+  animation: fish-pulled-up 1.4s forwards ease-in;
+}
+
+@keyframes fish-pulled-up {
+  0% { transform: translate(-50%, -130%); opacity: 1; }
+  100% { transform: translate(-50%, -350%); opacity: 0; }
+}
+
+/* Notification Popup for Events (Fish Spawned or Hooked) */
+.live-event-notification {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  animation: event-slide-in 0.4s cubic-bezier(0.18, 1.25, 0.4, 1);
+  z-index: 20;
+}
+
+@keyframes event-slide-in {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.event-spawn {
+  background: rgba(6, 78, 59, 0.92);
+  border: 1.5px solid #10b981;
+  color: #ecfdf5;
+}
+
+.event-hook {
+  background: rgba(127, 29, 29, 0.92);
+  border: 1.5px solid #ef4444;
+  color: #fef2f2;
+}
+
+.event-size {
+  background: rgba(12, 74, 110, 0.94);
+  border: 1.5px solid #38bdf8;
+  color: #f0f9ff;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Discreet Unhide Button when Hidden mode is active */
+.pond-unhide-btn {
+  position: absolute;
+  top: clamp(0.6rem, 1.8vw, 1.1rem);
+  right: clamp(0.6rem, 1.8vw, 1.1rem);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(24, 24, 27, 0.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 0.7rem;
+  padding: 0 10px;
+  height: calc(1.8rem + 0.44rem + 2px);
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.28;
+  transition: opacity 0.25s ease, background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.pond-unhide-btn:hover {
+  opacity: 1;
+  background: rgba(24, 24, 27, 0.92);
+  color: #ffffff;
+  transform: scale(1.02);
+}
+
+/* ------------------------------------------------------------- Mobile / Phone 9:16 Portrait Mode */
+.stage--mobile .pond-shell {
+  width: min(100vw, calc(100dvh * 9 / 16)) !important;
+  max-width: 100vw !important;
+  height: min(100dvh, calc(100vw * 16 / 9)) !important;
+  margin: 0 auto !important;
+}
+
+.stage--mobile .display {
+  aspect-ratio: 9 / 16 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 14%),
+    0 30px 90px rgb(0 0 0 / 70%) !important;
+}
+
+.stage--mobile .pond-ui {
+  max-width: min(100vw, calc(100dvh * 9 / 16)) !important;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.stage--mobile .control-dock {
+  max-width: min(100vw, calc(100dvh * 9 / 16)) !important;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stage--mobile.stage--ambient .pond-shell {
+  width: min(100vw, calc(100dvh * 9 / 16)) !important;
+  height: 100dvh !important;
+}
+
+.stage--mobile .live-instruction-pill {
+  max-width: 90vw !important;
+  font-size: 11px !important;
+  padding: 5px 12px !important;
+  text-align: center;
+}
+
+.stage--mobile .live-tribulation-banner {
+  max-width: calc(100vw - 24px) !important;
+  top: 8px !important;
+}
+
+/* Auto portrait on smartphone screens */
+@media (max-aspect-ratio: 1/1) {
+  .pond-shell {
+    width: min(100vw, calc(100dvh * 9 / 16));
+    height: min(100dvh, calc(100vw * 16 / 9));
+    margin: 0 auto;
+  }
+  .display {
+    aspect-ratio: 9 / 16;
+  }
+}
