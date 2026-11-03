@@ -248,6 +248,32 @@ export class FishRenderer {
   );
   private readonly shadowStrengthColor = new THREE.Color();
   private readonly targetFishShadowColor = new THREE.Color(FISH.shadow.color);
+  private readonly dragonColors = {
+    goldBase: new THREE.Color("#fbbf24"),
+    goldMarking: new THREE.Color("#d97706"),
+    hornIvory: new THREE.Color("#fef08a"),
+    hornGold: new THREE.Color("#fbbf24"),
+    flameRed: new THREE.Color("#ef4444"),
+    flameOrange: new THREE.Color("#f97316"),
+    flameYellow: new THREE.Color("#fbbf24"),
+    flameLight: new THREE.Color("#fef08a"),
+    eyeRed: new THREE.Color("#dc2626"),
+    eyePupil: new THREE.Color("#450a0a"),
+    clawIvory: new THREE.Color("#fef08a"),
+  };
+  private readonly dragonDepthColors = {
+    goldBase: new THREE.Color(),
+    goldMarking: new THREE.Color(),
+    hornIvory: new THREE.Color(),
+    hornGold: new THREE.Color(),
+    flameRed: new THREE.Color(),
+    flameOrange: new THREE.Color(),
+    flameYellow: new THREE.Color(),
+    flameLight: new THREE.Color(),
+    eyeRed: new THREE.Color(),
+    eyePupil: new THREE.Color(),
+    clawIvory: new THREE.Color(),
+  };
   private previousAppearanceTime = -1;
   private currentVisualDepth = 0;
   private previewFamilyIndex: number | null = null;
@@ -550,7 +576,11 @@ export class FishRenderer {
       const targetAppearance = this.depthAppearances[appearanceIndex];
       targetAppearance.pattern = sourceAppearance.pattern;
       this.updateDepthAppearance(fish, sourceAppearance, targetAppearance);
-      this.drawKoi(fish, targetAppearance);
+      if (fish.isDragon) {
+        this.drawEasternDragon(fish, targetAppearance);
+      } else {
+        this.drawKoi(fish, targetAppearance);
+      }
       if (showDebug) this.drawDebug(fish, targetAppearance);
     }
 
@@ -685,7 +715,7 @@ export class FishRenderer {
         fromAngle(fish.heading),
       );
       const normal = perpendicular(tangent);
-      const halfWidth = this.widthAt(fish, node) * hookScale;
+      const halfWidth = (fish.isDragon ? this.dragonWidthAt(fish, node) : this.widthAt(fish, node)) * hookScale;
       const spinePos = add(fish.renderSpine[node], vec(0, hookLift));
       left[node] = add(spinePos, mul(normal, halfWidth));
       right[node] = add(spinePos, mul(normal, -halfWidth));
@@ -696,8 +726,13 @@ export class FishRenderer {
       fromAngle(fish.heading),
     );
     const headNormal = perpendicular(headForward);
-    const noseCenter = add(fish.renderSpine[0], mul(headForward, fish.bodyWidth * 0.43));
-    const noseHalfWidth = this.widthAt(fish, 0) * 0.72;
+    const noseCenter = add(
+      fish.renderSpine[0],
+      mul(headForward, fish.bodyWidth * (fish.isDragon ? 0.52 : 0.43)),
+    );
+    const noseHalfWidth =
+      (fish.isDragon ? this.dragonWidthAt(fish, 0) : this.widthAt(fish, 0)) *
+      (fish.isDragon ? 0.78 : 0.72);
     const noseLeft = add(noseCenter, mul(headNormal, noseHalfWidth));
     const noseRight = add(noseCenter, mul(headNormal, -noseHalfWidth));
 
@@ -814,6 +849,17 @@ export class FishRenderer {
     return Math.max(0.7, fish.bodyWidth * profile);
   }
 
+  private dragonWidthAt(fish: Koi, node: number): number {
+    const t = node / (SPINE_NODES - 1);
+    const profile =
+      t < 0.12
+        ? 0.82 + (t / 0.12) * 0.26
+        : t < 0.65
+          ? 1.08 - ((t - 0.12) / 0.53) * 0.28
+          : Math.max(0.2, 0.8 - Math.pow((t - 0.65) / 0.35, 0.8) * 0.6);
+    return Math.max(0.8, fish.bodyWidth * profile);
+  }
+
   private visualDepth(depth: number): number {
     const range = Math.max(FISH.depth.visualEnd - FISH.depth.visualStart, 0.001);
     const linear = Math.max(
@@ -922,6 +968,382 @@ export class FishRenderer {
   private silhouetteCircle(center: Vec2, radius: number, color: THREE.Color): void {
     this.addShadowCircle(center, radius);
     this.outerTriangles.circle(center, radius, color);
+  }
+
+  public drawEasternDragon(fish: Koi, _appearance: FishAppearance): void {
+    this.currentVisualDepth = this.visualDepth(fish.depth);
+
+    this.applyDepthColor(this.dragonColors.goldBase, this.dragonDepthColors.goldBase, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.goldMarking, this.dragonDepthColors.goldMarking, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.hornIvory, this.dragonDepthColors.hornIvory, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.hornGold, this.dragonDepthColors.hornGold, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.flameRed, this.dragonDepthColors.flameRed, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.flameOrange, this.dragonDepthColors.flameOrange, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.flameYellow, this.dragonDepthColors.flameYellow, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.flameLight, this.dragonDepthColors.flameLight, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.eyeRed, this.dragonDepthColors.eyeRed, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.eyePupil, this.dragonDepthColors.eyePupil, this.currentVisualDepth);
+    this.applyDepthColor(this.dragonColors.clawIvory, this.dragonDepthColors.clawIvory, this.currentVisualDepth);
+
+    const colors = this.dragonDepthColors;
+
+    const left: Vec2[] = [];
+    const right: Vec2[] = [];
+
+    const hookScale = fish.isBeingFished
+      ? Math.max(0.01, 1 - fish.fishHookProgress * 0.95)
+      : 1;
+    const hookLift = fish.isBeingFished
+      ? -fish.fishHookProgress * 65
+      : 0;
+
+    for (let node = 0; node < SPINE_NODES; node += 1) {
+      const previous = Math.max(0, node - 1);
+      const next = Math.min(SPINE_NODES - 1, node + 1);
+      const tangent = normalize(
+        sub(fish.renderSpine[previous], fish.renderSpine[next]),
+        fromAngle(fish.heading),
+      );
+      const normal = perpendicular(tangent);
+      const halfWidth = this.dragonWidthAt(fish, node) * hookScale;
+      const spinePos = add(fish.renderSpine[node], vec(0, hookLift));
+      left[node] = add(spinePos, mul(normal, halfWidth));
+      right[node] = add(spinePos, mul(normal, -halfWidth));
+    }
+
+    const headForward = normalize(
+      sub(fish.renderSpine[0], fish.renderSpine[1]),
+      fromAngle(fish.heading),
+    );
+    const headNormal = perpendicular(headForward);
+    const headBackward = mul(headForward, -1);
+
+    // 1. 4 Dragon Claws (4 cụm chân vây móng vuốt tại node 4 và node 9)
+    const frontClaw = Math.min(4, SPINE_NODES - 3);
+    const backClaw = Math.min(9, SPINE_NODES - 2);
+    for (const cNode of [frontClaw, backClaw]) {
+      const cPrev = fish.renderSpine[Math.max(0, cNode - 1)];
+      const cNext = fish.renderSpine[Math.min(SPINE_NODES - 1, cNode + 1)];
+      const cTangent = normalize(sub(cPrev, cNext), fromAngle(fish.heading));
+      const cNormal = perpendicular(cTangent);
+      const cBackward = mul(cTangent, -1);
+
+      for (const side of [1, -1]) {
+        const sideNormal = mul(cNormal, side);
+        const bodyEdge = side === 1 ? left[cNode] : right[cNode];
+        const bodyEdgePrev = side === 1 ? left[cNode - 1] : right[cNode - 1];
+        const bodyEdgeNext = side === 1 ? left[cNode + 1] : right[cNode + 1];
+
+        const clawReach = fish.bodyWidth * 1.05 * hookScale;
+        const armDir = normalize(add(mul(sideNormal, 0.85), mul(cBackward, 0.42)), sideNormal);
+        const palm = add(bodyEdge, mul(armDir, clawReach));
+
+        // Forearm triangle
+        this.silhouetteTriangle(bodyEdgePrev, palm, bodyEdgeNext, colors.goldBase);
+
+        // 3-pronged sharp talons
+        const talonLen = fish.bodyWidth * 0.75 * hookScale;
+        const p1Dir = normalize(add(armDir, mul(cTangent, 0.55 * side)), armDir);
+        const p1Tip = add(palm, mul(p1Dir, talonLen * 0.85));
+
+        const p2Dir = armDir;
+        const p2Tip = add(palm, mul(p2Dir, talonLen * 1.15));
+
+        const p3Dir = normalize(add(armDir, mul(cBackward, 0.55)), armDir);
+        const p3Tip = add(palm, mul(p3Dir, talonLen * 0.85));
+
+        const palmSpread = mul(sideNormal, 1.2);
+        this.silhouetteTriangle(add(palm, mul(cTangent, 1.2)), p1Tip, palm, colors.clawIvory);
+        this.silhouetteTriangle(add(palm, palmSpread), p2Tip, sub(palm, palmSpread), colors.clawIvory);
+        this.silhouetteTriangle(palm, p3Tip, add(palm, mul(cBackward, 1.2)), colors.clawIvory);
+      }
+    }
+
+    // 2. Branched Antlers (Cặp sừng rồng vươn chếch ra sau với các nhánh nhọn vàng/ngà)
+    const hornLength = fish.bodyLength * 0.72 * hookScale;
+    const hornBaseLeft = add(fish.renderSpine[0], mul(headNormal, fish.bodyWidth * 0.45));
+    const hornBaseRight = add(fish.renderSpine[0], mul(headNormal, -fish.bodyWidth * 0.45));
+
+    // Left horn
+    const hornDirLeft = normalize(add(headBackward, mul(headNormal, 0.75)), headBackward);
+    const mainTipLeft = add(hornBaseLeft, mul(hornDirLeft, hornLength));
+    const hornBaseInnerLeft = add(hornBaseLeft, mul(headNormal, -fish.bodyWidth * 0.14));
+    this.silhouetteTriangle(hornBaseLeft, mainTipLeft, hornBaseInnerLeft, colors.hornGold);
+
+    const midLeft = lerp(hornBaseLeft, mainTipLeft, 0.45);
+    const prongDir1Left = normalize(add(hornDirLeft, mul(headNormal, 0.65)), hornDirLeft);
+    const prongTip1Left = add(midLeft, mul(prongDir1Left, hornLength * 0.42));
+    this.silhouetteTriangle(
+      midLeft,
+      prongTip1Left,
+      add(midLeft, mul(hornDirLeft, fish.bodyWidth * 0.12)),
+      colors.hornIvory,
+    );
+
+    const upperLeft = lerp(hornBaseLeft, mainTipLeft, 0.75);
+    const prongDir2Left = normalize(add(hornDirLeft, mul(headForward, 0.28)), hornDirLeft);
+    const prongTip2Left = add(upperLeft, mul(prongDir2Left, hornLength * 0.32));
+    this.silhouetteTriangle(
+      upperLeft,
+      prongTip2Left,
+      add(upperLeft, mul(hornDirLeft, fish.bodyWidth * 0.1)),
+      colors.hornIvory,
+    );
+
+    // Right horn
+    const hornDirRight = normalize(add(headBackward, mul(headNormal, -0.75)), headBackward);
+    const mainTipRight = add(hornBaseRight, mul(hornDirRight, hornLength));
+    const hornBaseInnerRight = add(hornBaseRight, mul(headNormal, fish.bodyWidth * 0.14));
+    this.silhouetteTriangle(hornBaseRight, hornBaseInnerRight, mainTipRight, colors.hornGold);
+
+    const midRight = lerp(hornBaseRight, mainTipRight, 0.45);
+    const prongDir1Right = normalize(add(hornDirRight, mul(headNormal, -0.65)), hornDirRight);
+    const prongTip1Right = add(midRight, mul(prongDir1Right, hornLength * 0.42));
+    this.silhouetteTriangle(
+      midRight,
+      add(midRight, mul(hornDirRight, fish.bodyWidth * 0.12)),
+      prongTip1Right,
+      colors.hornIvory,
+    );
+
+    const upperRight = lerp(hornBaseRight, mainTipRight, 0.75);
+    const prongDir2Right = normalize(add(hornDirRight, mul(headForward, 0.28)), hornDirRight);
+    const prongTip2Right = add(upperRight, mul(prongDir2Right, hornLength * 0.32));
+    this.silhouetteTriangle(
+      upperRight,
+      add(upperRight, mul(hornDirRight, fish.bodyWidth * 0.1)),
+      prongTip2Right,
+      colors.hornIvory,
+    );
+
+    // 3. Dynamic Undulating Whiskers (2 sợi râu rồng dài từ mõm uốn lượn)
+    const noseCenter = add(fish.renderSpine[0], mul(headForward, fish.bodyWidth * 0.52));
+    const whiskerRootLeft = add(noseCenter, mul(headNormal, fish.bodyWidth * 0.32));
+    const whiskerRootRight = add(noseCenter, mul(headNormal, -fish.bodyWidth * 0.32));
+    const WHISKER_STEPS = 6;
+
+    let prevPtLeft = whiskerRootLeft;
+    let prevWidthLeft = fish.bodyWidth * 0.09 * hookScale;
+    let prevPtRight = whiskerRootRight;
+    let prevWidthRight = fish.bodyWidth * 0.09 * hookScale;
+
+    for (let step = 1; step <= WHISKER_STEPS; step += 1) {
+      const t = step / WHISKER_STEPS;
+      const wave = Math.sin(fish.swimPhase * 1.5 - step * 0.4) * fish.bodyWidth * 0.45 * (0.3 + 0.7 * t);
+      const backDist = fish.bodyLength * 0.22 * step * hookScale;
+      const outDist = fish.bodyWidth * (0.32 + 0.55 * t);
+
+      // Left whisker segment
+      const nextPtLeft = add(
+        whiskerRootLeft,
+        add(mul(headBackward, backDist), mul(headNormal, outDist + wave)),
+      );
+      const curWidthLeft = Math.max(0.35, prevWidthLeft * 0.78);
+      const segDirLeft = normalize(sub(nextPtLeft, prevPtLeft), headBackward);
+      const segNormLeft = perpendicular(segDirLeft);
+      this.silhouetteTriangle(
+        add(prevPtLeft, mul(segNormLeft, prevWidthLeft * 0.5)),
+        add(prevPtLeft, mul(segNormLeft, -prevWidthLeft * 0.5)),
+        add(nextPtLeft, mul(segNormLeft, -curWidthLeft * 0.5)),
+        colors.hornIvory,
+      );
+      this.silhouetteTriangle(
+        add(prevPtLeft, mul(segNormLeft, prevWidthLeft * 0.5)),
+        add(nextPtLeft, mul(segNormLeft, -curWidthLeft * 0.5)),
+        add(nextPtLeft, mul(segNormLeft, curWidthLeft * 0.5)),
+        colors.hornIvory,
+      );
+      prevPtLeft = nextPtLeft;
+      prevWidthLeft = curWidthLeft;
+
+      // Right whisker segment
+      const nextPtRight = add(
+        whiskerRootRight,
+        add(mul(headBackward, backDist), mul(headNormal, -(outDist + wave))),
+      );
+      const curWidthRight = Math.max(0.35, prevWidthRight * 0.78);
+      const segDirRight = normalize(sub(nextPtRight, prevPtRight), headBackward);
+      const segNormRight = perpendicular(segDirRight);
+      this.silhouetteTriangle(
+        add(prevPtRight, mul(segNormRight, prevWidthRight * 0.5)),
+        add(prevPtRight, mul(segNormRight, -prevWidthRight * 0.5)),
+        add(nextPtRight, mul(segNormRight, -curWidthRight * 0.5)),
+        colors.hornIvory,
+      );
+      this.silhouetteTriangle(
+        add(prevPtRight, mul(segNormRight, prevWidthRight * 0.5)),
+        add(nextPtRight, mul(segNormRight, -curWidthRight * 0.5)),
+        add(nextPtRight, mul(segNormRight, curWidthRight * 0.5)),
+        colors.hornIvory,
+      );
+      prevPtRight = nextPtRight;
+      prevWidthRight = curWidthRight;
+    }
+
+    // 4. Serpentine Body Quads & Golden Scales
+    for (let node = SPINE_NODES - 2; node >= 0; node -= 1) {
+      this.silhouetteTriangle(
+        left[node],
+        right[node],
+        right[node + 1],
+        colors.goldBase,
+      );
+      this.silhouetteTriangle(
+        left[node],
+        right[node + 1],
+        left[node + 1],
+        colors.goldBase,
+      );
+    }
+
+    // Snout and head triangles
+    const noseHalfWidth = this.dragonWidthAt(fish, 0) * 0.78 * hookScale;
+    const noseLeft = add(noseCenter, mul(headNormal, noseHalfWidth));
+    const noseRight = add(noseCenter, mul(headNormal, -noseHalfWidth));
+    this.silhouetteTriangle(left[0], noseLeft, noseRight, colors.goldBase);
+    this.silhouetteTriangle(left[0], noseRight, right[0], colors.goldBase);
+    this.silhouetteCircle(
+      noseCenter,
+      Math.max(1, noseHalfWidth * 0.78),
+      colors.goldBase,
+    );
+
+    // 5. Flaming Dorsal Crest (Bờm lưng lửa dọc từ đốt sống 1 đến 14)
+    for (let node = 1; node < SPINE_NODES - 1; node += 1) {
+      const crestBasePrev = fish.renderSpine[node - 1];
+      const crestBaseNext = fish.renderSpine[node + 1];
+      const crestTangent = normalize(sub(crestBasePrev, crestBaseNext), fromAngle(fish.heading));
+      const crestNormal = perpendicular(crestTangent);
+      const crestBackward = mul(crestTangent, -1);
+
+      const flameHeight =
+        fish.bodyWidth * (0.85 + 0.35 * Math.sin(fish.swimPhase * 2.2 - node * 0.65)) * hookScale;
+      const flutter = Math.sin(fish.swimPhase * 1.6 + node * 0.9) * fish.bodyWidth * 0.35;
+      const crestTip = add(
+        fish.renderSpine[node],
+        add(mul(crestBackward, flameHeight), mul(crestNormal, flutter)),
+      );
+
+      const flameColor = node % 2 === 0 ? colors.flameRed : colors.flameOrange;
+      this.silhouetteTriangle(crestBasePrev, crestTip, crestBaseNext, flameColor);
+
+      // Inner flame peak accent
+      const innerTip = lerp(fish.renderSpine[node], crestTip, 0.62);
+      this.silhouetteTriangle(
+        lerp(crestBasePrev, fish.renderSpine[node], 0.35),
+        innerTip,
+        lerp(crestBaseNext, fish.renderSpine[node], 0.35),
+        colors.flameYellow,
+      );
+    }
+
+    // 6. Flaming Dragon Tail Plume (Đuôi rồng thần thoại 5 dải lửa)
+    const tailNode = SPINE_NODES - 1;
+    const tailForward = normalize(
+      sub(fish.renderSpine[tailNode - 1], fish.renderSpine[tailNode]),
+      fromAngle(fish.heading),
+    );
+    const tailNormal = perpendicular(tailForward);
+    const tailBackward = mul(tailForward, -1);
+    const tailPos = fish.renderSpine[tailNode];
+
+    const plumePlacements = [
+      { k: -2, color: colors.flameRed },
+      { k: -1, color: colors.flameOrange },
+      { k: 0, color: colors.flameYellow },
+      { k: 1, color: colors.flameOrange },
+      { k: 2, color: colors.flameRed },
+    ];
+
+    for (const { k, color } of plumePlacements) {
+      const ribbonDir = normalize(add(tailBackward, mul(tailNormal, k * 0.36)), tailBackward);
+      const ribbonLen = fish.bodyLength * (1.35 + 0.22 * (2 - Math.abs(k))) * hookScale;
+      const wave = Math.sin(fish.swimPhase * 1.8 - 1.2 + k * 0.6) * fish.bodyWidth * 0.55;
+
+      const mid = add(tailPos, add(mul(ribbonDir, ribbonLen * 0.5), mul(tailNormal, wave * 0.45)));
+      const tip = add(tailPos, add(mul(ribbonDir, ribbonLen), mul(tailNormal, wave)));
+
+      const baseA = add(tailPos, mul(tailNormal, (k - 0.45) * fish.bodyWidth * 0.22));
+      const baseB = add(tailPos, mul(tailNormal, (k + 0.45) * fish.bodyWidth * 0.22));
+      const midA = add(mid, mul(tailNormal, 0.8));
+      const midB = add(mid, mul(tailNormal, -0.8));
+
+      this.silhouetteTriangle(baseA, midA, baseB, color);
+      this.silhouetteTriangle(baseB, midA, midB, color);
+      this.silhouetteTriangle(midA, tip, midB, color);
+    }
+
+    // 7. Scales & Eyes on Markings Layer
+    for (let node = 1; node < SPINE_NODES - 1; node += 1) {
+      const nodePos = fish.renderSpine[node];
+      const prevPos = fish.renderSpine[node - 1];
+      const nextPos = fish.renderSpine[node + 1];
+      const nodeForward = normalize(sub(prevPos, nextPos), fromAngle(fish.heading));
+      const nodeNormal = perpendicular(nodeForward);
+      const w = this.dragonWidthAt(fish, node) * hookScale;
+
+      // Center scale
+      this.bodyTriangles.ellipse(
+        nodePos,
+        nodeForward,
+        nodeNormal,
+        fish.bodyLength * 0.08,
+        w * 0.42,
+        colors.goldMarking,
+        node * 1.5,
+        8,
+      );
+      // Flank scales
+      this.bodyTriangles.ellipse(
+        add(nodePos, mul(nodeNormal, w * 0.44)),
+        nodeForward,
+        nodeNormal,
+        fish.bodyLength * 0.06,
+        w * 0.26,
+        colors.goldMarking,
+        node * 1.5 + 0.8,
+        8,
+      );
+      this.bodyTriangles.ellipse(
+        add(nodePos, mul(nodeNormal, -w * 0.44)),
+        nodeForward,
+        nodeNormal,
+        fish.bodyLength * 0.06,
+        w * 0.26,
+        colors.goldMarking,
+        node * 1.5 - 0.8,
+        8,
+      );
+    }
+
+    // Dragon Eyes: Crimson glow with dark pupil
+    const eyeAnchor = add(fish.renderSpine[0], mul(headForward, fish.bodyWidth * 0.16));
+    const eyeOffset = this.dragonWidthAt(fish, 0) * 0.62 * hookScale;
+    const eyeRadius = Math.max(0.75, fish.bodyWidth * 0.13);
+    this.bodyTriangles.circle(
+      add(eyeAnchor, mul(headNormal, eyeOffset)),
+      eyeRadius,
+      colors.eyeRed,
+      8,
+    );
+    this.bodyTriangles.circle(
+      add(eyeAnchor, mul(headNormal, -eyeOffset)),
+      eyeRadius,
+      colors.eyeRed,
+      8,
+    );
+    this.bodyTriangles.circle(
+      add(eyeAnchor, mul(headNormal, eyeOffset)),
+      eyeRadius * 0.5,
+      colors.eyePupil,
+      6,
+    );
+    this.bodyTriangles.circle(
+      add(eyeAnchor, mul(headNormal, -eyeOffset)),
+      eyeRadius * 0.5,
+      colors.eyePupil,
+      6,
+    );
   }
 
   private drawKoi(fish: Koi, appearance: FishAppearance): void {
