@@ -23,7 +23,7 @@
 - Consumes: `Vec2`
 - Produces: `FoodPellet.showTag?: boolean`, `FoodSystem.spawn(point, user, avatar?, showTag?)`
 
-- [ ] **Step 1: Update `src/food-system.ts`**
+- [x] **Step 1: Update `src/food-system.ts`**
 
 Update `FoodPellet`:
 ```typescript
@@ -63,7 +63,7 @@ Update `spawn` method:
   }
 ```
 
-- [ ] **Step 2: Verify tests compile and pass**
+- [x] **Step 2: Verify tests compile and pass**
 
 Run: `npm test`
 
@@ -78,7 +78,7 @@ Run: `npm test`
 - Consumes: `FoodPellet.showTag`
 - Produces: Cleaner pellet rendering without overlapping username tags
 
-- [ ] **Step 1: Update `src/components/live-overlay.tsx`**
+- [x] **Step 1: Update `src/components/live-overlay.tsx`**
 
 Replace:
 ```tsx
@@ -93,7 +93,7 @@ With:
               )}
 ```
 
-- [ ] **Step 2: Verify tests and build**
+- [x] **Step 2: Verify tests and build**
 
 Run: `npm test && npm run build`
 
@@ -108,7 +108,7 @@ Run: `npm test && npm run build`
 - Consumes: `msg.coins`, `msg.count`, `msg.user`, `msg.avatar`
 - Produces: Dynamic pellets spawn (10 to 60) across pond with `showTag: i < 3`
 
-- [ ] **Step 1: Update `src/live-client.ts` in `case "gift":`**
+- [x] **Step 1: Update `src/live-client.ts` in `case "gift":`**
 
 Replace:
 ```typescript
@@ -145,12 +145,12 @@ With:
         this.school.callTo(vec(CANVAS_WIDTH * 0.5, CANVAS_HEIGHT * 0.5));
 ```
 
-- [ ] **Step 2: Verify full build and test suite**
+- [x] **Step 2: Verify full build and test suite**
 
 Run: `npm run build && npm test`
 Expected: 0 errors, all tests pass.
 
-- [ ] **Step 3: Commit implementation**
+- [x] **Step 3: Commit implementation**
 
 ```bash
 git add src/food-system.ts src/components/live-overlay.tsx src/live-client.ts
