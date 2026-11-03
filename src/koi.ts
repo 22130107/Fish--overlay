@@ -76,6 +76,19 @@ export class Koi {
     return { title: t.fullName, badge: t.badge, color: t.auraColor };
   }
 
+  public get isDragon(): boolean {
+    return Boolean(
+      this.passedTribulation82 ||
+      (this.sizeCm >= 82.0 && this.tribulationAura === "dragon")
+    );
+  }
+
+  public constructor(index?: number, random?: XorShift32) {
+    if (index !== undefined && random !== undefined) {
+      this.reset(index, random);
+    }
+  }
+
   public reset(index: number, random: XorShift32): void {
     this.position = vec(
       random.range(45, CANVAS_WIDTH - 45),
