@@ -521,6 +521,7 @@ export function App() {
     const isLive = new URLSearchParams(window.location.search).get("live") === "1";
     const school = new School(isLive ? 1 : FISH.initialCount);
     const renderer = new FishRenderer(canvas);
+    (school as any).fishRenderer = renderer;
     const foodSystem = foodSystemRef.current;
     const runtime: PondRuntime = { school, renderer, foodSystem, showDebug: false };
     const liveClient = new LiveClient(school, foodSystem);
@@ -657,6 +658,7 @@ export function App() {
       disconnectEffects();
       resizeObserver.disconnect();
       window.removeEventListener("keydown", handleKeyDown);
+      (school as any).fishRenderer = null;
       renderer.dispose();
       runtimeRef.current = null;
     };

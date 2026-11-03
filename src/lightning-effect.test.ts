@@ -106,6 +106,20 @@ describe("LightningEffect", () => {
     expect(lightning.getFlashAlpha()).toBe(0);
   });
 
+  it("triggers burst flash with flashAlpha 0.65 and decays smoothly via renderFlash()", () => {
+    const lightning = new LightningEffect();
+    const ctx = createMockCtx();
+    expect(lightning.getFlashAlpha()).toBe(0);
+
+    lightning.triggerBurstFlash();
+    expect(lightning.getFlashAlpha()).toBe(0.65);
+
+    lightning.renderFlash(ctx, 0.05);
+    expect(lightning.getFlashAlpha()).toBeLessThan(0.65);
+    expect(lightning.getFlashAlpha()).toBeGreaterThan(0);
+    expect(ctx.fillRect).toHaveBeenCalled();
+  });
+
   it("provides render() method that delegates to updateAndRender()", () => {
     const lightning = new LightningEffect();
     const ctx = createMockCtx();

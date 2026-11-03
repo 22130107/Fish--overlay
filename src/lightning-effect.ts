@@ -33,13 +33,7 @@ export class LightningEffect {
     }
 
     // Screen flash
-    if (this.flashAlpha > 0) {
-      ctx.save();
-      ctx.fillStyle = `rgba(255, 255, 255, ${this.flashAlpha})`;
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.restore();
-      this.flashAlpha = Math.max(0, this.flashAlpha - dt * 2.5);
-    }
+    this.renderFlash(ctx, dt);
 
     // Render & update active bolts
     ctx.save();
@@ -79,6 +73,16 @@ export class LightningEffect {
 
   public getBolts(): readonly LightningBolt[] {
     return this.bolts;
+  }
+
+  public renderFlash(ctx: CanvasRenderingContext2D, dt: number): void {
+    if (this.flashAlpha > 0) {
+      ctx.save();
+      ctx.fillStyle = `rgba(255, 230, 150, ${this.flashAlpha})`;
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.restore();
+      this.flashAlpha = Math.max(0, this.flashAlpha - dt * 2.0);
+    }
   }
 
   public getFlashAlpha(): number {

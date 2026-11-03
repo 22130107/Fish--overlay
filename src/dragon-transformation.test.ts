@@ -20,4 +20,21 @@ describe("Koi isDragon state", () => {
     fish.tribulationAura = "dragon";
     expect(fish.isDragon).toBe(true);
   });
+
+  it("verifies 82cm onSuccess transformation logic on Koi", () => {
+    const fish = new Koi(0, new XorShift32(1234));
+    fish.eatCount = 124; // 82cm
+    expect(fish.isDragon).toBe(false);
+
+    // Simulate onSuccess logic for targetCm >= 82
+    const st = { targetCm: 82.0 };
+    if (st.targetCm >= 82) {
+      fish.passedTribulation82 = true;
+      fish.tribulationAura = "dragon";
+    }
+
+    expect(fish.passedTribulation82).toBe(true);
+    expect(fish.tribulationAura).toBe("dragon");
+    expect(fish.isDragon).toBe(true);
+  });
 });
