@@ -24,6 +24,7 @@ import {
   normalize,
   perpendicular,
   sub,
+  vec,
   type Vec2,
 } from "./math";
 import { PondBedPass } from "./pond-bed";
@@ -33,6 +34,8 @@ import { TinyFishRenderer } from "./tiny-fish-renderer";
 import { WaterSurfacePass } from "./water-surface";
 import { WeatherPass } from "./weather-pass";
 import type { WeatherPresetId } from "./weather";
+import { LightningEffect } from "./lightning-effect";
+import type { TribulationState } from "./tribulation-types";
 
 const TRIANGLE_FLOAT_CAPACITY = 72_000;
 const LINE_FLOAT_CAPACITY = 18_000;
@@ -248,9 +251,50 @@ export class FishRenderer {
   private previousAppearanceTime = -1;
   private currentVisualDepth = 0;
   private previewFamilyIndex: number | null = null;
+  public readonly overlayCanvas: HTMLCanvasElement | null = null;
+  public readonly overlayCtx: CanvasRenderingContext2D | null = null;
+  public readonly lightning = new LightningEffect();
+  public tribulationState: TribulationState | null = null;
+  private previousEffectTime = -1;
+  private smokeParticles: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    life: number;
+    maxLife: number;
+  }> = [];
 
   public constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
+    if (typeof document !== "undefined") {
+      try {
+        let overlay = document.getElementById("pond-effects-overlay") as HTMLCanvasElement | null;
+        if (!overlay) {
+          overlay = document.createElement("canvas");
+          overlay.id = "pond-effects-overlay";
+          overlay.className = "pond-effects-overlay";
+          overlay.style.position = "absolute";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100%";
+          overlay.style.height = "100%";
+          overlay.style.pointerEvents = "none";
+          overlay.style.zIndex = "1";
+        }
+        this.overlayCanvas = overlay;
+        this.overlayCanvas.width = canvas.width;
+        this.overlayCanvas.height = canvas.height;
+        this.overlayCtx = this.overlayCanvas.getContext("2d");
+        if (canvas.parentElement && !overlay.parentElement) {
+          canvas.parentElement.style.position = "relative";
+          canvas.parentElement.appendChild(overlay);
+        }
+      } catch {
+        // Safe fallback in non-DOM/test environments
+      }
+    }
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -409,6 +453,10 @@ export class FishRenderer {
 
   public resize(width: number, height: number, oldWidth: number, oldHeight: number): void {
     this.renderer.setSize(width, height, false);
+    if (this.overlayCanvas) {
+      this.overlayCanvas.width = width;
+      this.overlayCanvas.height = height;
+    }
     this.underwaterTarget.setSize(width, height);
     this.compositeTarget.setSize(width, height);
     this.camera.right = width;
@@ -421,12 +469,18 @@ export class FishRenderer {
   }
 
   public dispose(): void {
+    this.overlayCanvas?.remove();
+    this.lightning.clear();
     this.underwaterTarget.dispose();
     this.compositeTarget.dispose();
     this.surfaceDisturbance.dispose();
     this.fishShadowMaterial.dispose();
     this.weather.dispose();
     this.renderer.dispose();
+  }
+
+  public setTribulationState(state: TribulationState | null): void {
+    this.tribulationState = state;
   }
 
   public setWeatherPreset(id: WeatherPresetId): void {
@@ -437,7 +491,16 @@ export class FishRenderer {
     this.previewFamilyIndex = index;
   }
 
-  public draw(school: School, time: number, showDebug: boolean): void {
+  public draw(
+    school: School,
+    time: number,
+    showDebug: boolean,
+    tribulation?: TribulationState | null,
+    externalCtx?: CanvasRenderingContext2D,
+  ): void {
+    if (tribulation !== undefined) {
+      this.tribulationState = tribulation;
+    }
     if (this.previousAppearanceTime >= 0) {
       const deltaTime = Math.min(
         0.1,
@@ -480,10 +543,14 @@ export class FishRenderer {
       const fish = school.fish[index];
       this.buildRenderSpine(fish);
       const appearanceIndex = previewIndex ?? index;
-      const appearance = this.depthAppearances[appearanceIndex];
-      this.updateDepthAppearance(fish, this.appearances[appearanceIndex], appearance);
-      this.drawKoi(fish, appearance);
-      if (showDebug) this.drawDebug(fish, appearance);
+      const sourceAppearance = (previewIndex === null && fish.customAppearance)
+        ? fish.customAppearance
+        : this.appearances[appearanceIndex];
+      const targetAppearance = this.depthAppearances[appearanceIndex];
+      targetAppearance.pattern = sourceAppearance.pattern;
+      this.updateDepthAppearance(fish, sourceAppearance, targetAppearance);
+      this.drawKoi(fish, targetAppearance);
+      if (showDebug) this.drawDebug(fish, targetAppearance);
     }
 
     this.shadowTriangles.commit();
@@ -524,6 +591,195 @@ export class FishRenderer {
     this.renderer.setRenderTarget(null);
     this.renderer.clear();
     this.renderer.render(this.weatherScene, this.surfaceCamera);
+
+    this.renderEffects(school, time, externalCtx);
+  }
+
+  public renderEffects(
+    school: School,
+    time: number,
+    externalCtx?: CanvasRenderingContext2D,
+  ): void {
+    if (this.overlayCanvas && !this.overlayCanvas.parentElement && this.canvas.parentElement) {
+      try {
+        this.canvas.parentElement.style.position = "relative";
+        this.canvas.parentElement.appendChild(this.overlayCanvas);
+      } catch {
+        // Safe fallback in mock/test environments
+      }
+    }
+
+    const ctx = externalCtx ?? this.overlayCtx;
+    if (!ctx) return;
+
+    const dt = this.previousEffectTime >= 0
+      ? Math.min(0.1, Math.max(0, time - this.previousEffectTime))
+      : 0.016;
+    this.previousEffectTime = time;
+
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // 1. Dragon aura and smoke particles on fish
+    for (let index = 0; index < school.count; index += 1) {
+      const fish = school.fish[index];
+      const hasDragonAura = fish.tribulationAura === "dragon" || fish.sizeCm >= 82;
+      if (hasDragonAura) {
+        this.renderDragonAura(ctx, fish, time);
+      }
+      if (fish.tribulationAura === "smoke" && fish.smokeTimer > 0) {
+        this.renderFishSmoke(ctx, fish, dt);
+      }
+    }
+
+    // 2. Drifting smoke update & draw
+    this.updateAndDrawSmoke(ctx, dt);
+
+    // 3. Procedural branched lightning when tribulation is active
+    const tribulation = this.tribulationState ?? (school as any).tribulation as TribulationState | undefined;
+    if (tribulation && tribulation.active) {
+      const targetFish = school.fish
+        .slice(0, school.count)
+        .find((f) => f.ownerId === tribulation.targetFishId);
+      const targetPos = targetFish
+        ? targetFish.position
+        : vec(CANVAS_WIDTH * 0.5, CANVAS_HEIGHT * 0.5);
+      const powerPercent = tribulation.requiredPower > 0
+        ? Math.min(100, (tribulation.currentPower / tribulation.requiredPower) * 100)
+        : 0;
+
+      this.lightning.updateAndRender(
+        ctx,
+        dt,
+        targetPos,
+        powerPercent,
+        (pos) => {
+          school.ripples.trigger("touch", pos);
+        },
+      );
+    } else {
+      this.lightning.clear();
+    }
+  }
+
+  public traceFishPath(ctx: CanvasRenderingContext2D, fish: Koi): void {
+    if (!fish.renderSpine[0] || (fish.renderSpine[0].x === 0 && fish.renderSpine[0].y === 0)) {
+      this.buildRenderSpine(fish);
+    }
+
+    const hookScale = fish.isBeingFished
+      ? Math.max(0.01, 1 - fish.fishHookProgress * 0.95)
+      : 1;
+    const hookLift = fish.isBeingFished
+      ? -fish.fishHookProgress * 65
+      : 0;
+
+    const left: Vec2[] = [];
+    const right: Vec2[] = [];
+
+    for (let node = 0; node < SPINE_NODES; node += 1) {
+      const previous = Math.max(0, node - 1);
+      const next = Math.min(SPINE_NODES - 1, node + 1);
+      const tangent = normalize(
+        sub(fish.renderSpine[previous], fish.renderSpine[next]),
+        fromAngle(fish.heading),
+      );
+      const normal = perpendicular(tangent);
+      const halfWidth = this.widthAt(fish, node) * hookScale;
+      const spinePos = add(fish.renderSpine[node], vec(0, hookLift));
+      left[node] = add(spinePos, mul(normal, halfWidth));
+      right[node] = add(spinePos, mul(normal, -halfWidth));
+    }
+
+    const headForward = normalize(
+      sub(fish.renderSpine[0], fish.renderSpine[1]),
+      fromAngle(fish.heading),
+    );
+    const headNormal = perpendicular(headForward);
+    const noseCenter = add(fish.renderSpine[0], mul(headForward, fish.bodyWidth * 0.43));
+    const noseHalfWidth = this.widthAt(fish, 0) * 0.72;
+    const noseLeft = add(noseCenter, mul(headNormal, noseHalfWidth));
+    const noseRight = add(noseCenter, mul(headNormal, -noseHalfWidth));
+
+    ctx.beginPath();
+    ctx.moveTo(noseCenter.x, noseCenter.y);
+    ctx.lineTo(noseLeft.x, noseLeft.y);
+    for (let node = 0; node < SPINE_NODES; node += 1) {
+      ctx.lineTo(left[node].x, left[node].y);
+    }
+    const tailNode = SPINE_NODES - 1;
+    ctx.lineTo(fish.renderSpine[tailNode].x, fish.renderSpine[tailNode].y);
+    for (let node = SPINE_NODES - 1; node >= 0; node -= 1) {
+      ctx.lineTo(right[node].x, right[node].y);
+    }
+    ctx.lineTo(noseRight.x, noseRight.y);
+    ctx.closePath();
+  }
+
+  public renderDragonAura(ctx: CanvasRenderingContext2D, fish: Koi, time: number): void {
+    this.traceFishPath(ctx, fish);
+    ctx.save();
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "#fbbf24";
+    ctx.strokeStyle = "rgba(251, 191, 36, 0.6)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.restore();
+
+    // Glittering golden motes orbiting the dragon fish
+    const pulse = 0.5 + 0.5 * Math.sin(time * 3 + fish.phaseOffset);
+    const headNode = fish.renderSpine[0] ?? fish.position;
+    ctx.save();
+    ctx.fillStyle = `rgba(254, 240, 138, ${0.4 + 0.3 * pulse})`;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "#f59e0b";
+    for (let i = 0; i < 3; i++) {
+      const angle = time * 2.5 + i * ((Math.PI * 2) / 3) + fish.phaseOffset;
+      const radius = fish.bodyWidth * (0.85 + 0.25 * Math.sin(time * 4 + i));
+      const px = headNode.x + Math.cos(angle) * radius;
+      const py = headNode.y + Math.sin(angle) * radius;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  public renderFishSmoke(_ctx: CanvasRenderingContext2D, fish: Koi, _dt: number): void {
+    if (Math.random() < 0.45) {
+      const spineNode = fish.renderSpine[Math.min(2, SPINE_NODES - 1)] ?? fish.position;
+      this.smokeParticles.push({
+        x: spineNode.x + (Math.random() - 0.5) * fish.bodyWidth,
+        y: spineNode.y + (Math.random() - 0.5) * fish.bodyWidth,
+        vx: (Math.random() - 0.5) * 16,
+        vy: -22 - Math.random() * 26,
+        radius: 3.5 + Math.random() * 3.5,
+        life: 0.8 + Math.random() * 0.6,
+        maxLife: 1.4,
+      });
+    }
+  }
+
+  public updateAndDrawSmoke(ctx: CanvasRenderingContext2D, dt: number): void {
+    if (this.smokeParticles.length === 0) return;
+
+    ctx.save();
+    for (const p of this.smokeParticles) {
+      p.life -= dt;
+      if (p.life <= 0) continue;
+
+      p.x += p.vx * dt + Math.sin(p.life * 5) * 0.4;
+      p.y += p.vy * dt;
+      p.radius += dt * 6;
+
+      const alpha = Math.max(0, (p.life / p.maxLife) * 0.35);
+      ctx.fillStyle = `rgba(75, 75, 75, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    this.smokeParticles = this.smokeParticles.filter((p) => p.life > 0);
   }
 
   private buildRenderSpine(fish: Koi): void {
@@ -672,6 +928,13 @@ export class FishRenderer {
     const left: Vec2[] = [];
     const right: Vec2[] = [];
 
+    const hookScale = fish.isBeingFished
+      ? Math.max(0.01, 1 - fish.fishHookProgress * 0.95)
+      : 1;
+    const hookLift = fish.isBeingFished
+      ? -fish.fishHookProgress * 65
+      : 0;
+
     for (let node = 0; node < SPINE_NODES; node += 1) {
       const previous = Math.max(0, node - 1);
       const next = Math.min(SPINE_NODES - 1, node + 1);
@@ -680,9 +943,10 @@ export class FishRenderer {
         fromAngle(fish.heading),
       );
       const normal = perpendicular(tangent);
-      const halfWidth = this.widthAt(fish, node);
-      left[node] = add(fish.renderSpine[node], mul(normal, halfWidth));
-      right[node] = add(fish.renderSpine[node], mul(normal, -halfWidth));
+      const halfWidth = this.widthAt(fish, node) * hookScale;
+      const spinePos = add(fish.renderSpine[node], vec(0, hookLift));
+      left[node] = add(spinePos, mul(normal, halfWidth));
+      right[node] = add(spinePos, mul(normal, -halfWidth));
     }
 
     const pectoralFront = 3;
@@ -703,7 +967,7 @@ export class FishRenderer {
       0.82 +
       paddleActivity * 0.25 * Math.sin(fish.swimPhase * 0.64 + fish.phaseOffset);
     const pectoralReach =
-      fish.bodyWidth * (0.55 + paddleActivity * 0.25) * finPulse;
+      fish.bodyWidth * (0.55 + paddleActivity * 0.25) * finPulse * hookScale;
     const leftPectoral = add(
       add(left[pectoralCenter], mul(pectoralNormal, pectoralReach)),
       mul(pectoralTangent, -fish.bodyWidth * 0.22),
@@ -733,7 +997,7 @@ export class FishRenderer {
       fromAngle(fish.heading),
     );
     const pelvicNormal = perpendicular(pelvicTangent);
-    const pelvicReach = fish.bodyWidth * (0.28 + 0.05 * finPulse);
+    const pelvicReach = fish.bodyWidth * (0.28 + 0.05 * finPulse) * hookScale;
     const leftPelvic = add(left[pelvicCenter], mul(pelvicNormal, pelvicReach));
     const rightPelvic = add(right[pelvicCenter], mul(pelvicNormal, -pelvicReach));
     this.silhouetteTriangle(
