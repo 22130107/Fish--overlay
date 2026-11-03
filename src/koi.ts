@@ -1,5 +1,7 @@
-import { CANVAS_HEIGHT, CANVAS_WIDTH, FISH, SPINE_NODES, TAU } from "./config";
+import { CANVAS_HEIGHT, CANVAS_WIDTH, FISH, FISH_MAX_HUNGER_TIME, SPINE_NODES, TAU } from "./config";
 import { add, fromAngle, mul, type Vec2, vec, XorShift32 } from "./math";
+import type { FishAppearance } from "./fish-appearance";
+import { calculateTuTienRank, type TuTienRank } from "./tu-tien";
 
 export enum SwimState {
   Glide,
@@ -43,6 +45,36 @@ export class Koi {
   public gulpAnimation = 0;
   public behaviorRng = 1;
   public state = SwimState.Glide;
+
+  // Live Stream ownership & survival mechanics
+  public ownerId: string | null = null;
+  public ownerName: string | null = null;
+  public ownerAvatar: string | null = null;
+  public hunger = 100;
+  public maxHungerTime = FISH_MAX_HUNGER_TIME;
+  public hungerTimeLeft = FISH_MAX_HUNGER_TIME;
+  public isBeingFished = false;
+  public fishHookProgress = 0;
+  public customAppearance: (FishAppearance & { name?: string }) | null = null;
+  public eatCount = 0;
+  public sizeAlertTimer = 0;
+  public passedTribulation72 = false;
+  public passedTribulation82 = false;
+  public tribulationAura: "dragon" | "smoke" | null = null;
+  public smokeTimer = 0;
+
+  public get sizeCm(): number {
+    return Math.min(85.0, Math.round((20.0 + this.eatCount * 0.5) * 10) / 10);
+  }
+
+  public get tuTien(): TuTienRank {
+    return calculateTuTienRank(this.sizeCm);
+  }
+
+  public get sizeRank(): { title: string; badge: string; color: string } {
+    const t = this.tuTien;
+    return { title: t.fullName, badge: t.badge, color: t.auraColor };
+  }
 
   public reset(index: number, random: XorShift32): void {
     this.position = vec(
@@ -98,6 +130,21 @@ export class Koi {
     this.stateAge = random.range(0, this.stateDuration * 0.8);
     this.pivotHeading = this.heading;
     this.tailEffort = 0.6;
+    this.ownerId = null;
+    this.ownerName = null;
+    this.ownerAvatar = null;
+    this.hunger = 100;
+    this.maxHungerTime = FISH_MAX_HUNGER_TIME;
+    this.hungerTimeLeft = FISH_MAX_HUNGER_TIME;
+    this.isBeingFished = false;
+    this.fishHookProgress = 0;
+    this.customAppearance = null;
+    this.eatCount = 0;
+    this.sizeAlertTimer = 0;
+    this.passedTribulation72 = false;
+    this.passedTribulation82 = false;
+    this.tribulationAura = null;
+    this.smokeTimer = 0;
     this.angularVelocity = 0;
     this.velocity = mul(fromAngle(this.heading), this.speed);
 
