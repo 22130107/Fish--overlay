@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
-import { calculateTuTienRank, getTuTienVoiceLine } from './tu-tien.mjs';
+import { calculateTuTienRank, getTuTienVoiceLine, formatNumberToVietnamese } from './tu-tien.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TTS_DIR = path.join(__dirname, 'tts');

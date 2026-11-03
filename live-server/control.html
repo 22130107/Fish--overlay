@@ -267,6 +267,9 @@
         } else if (msg.t === 'state') {
           if (msg.tiktok) updateTikTokState(msg.tiktok);
           if (msg.topDonors) updateDonors(msg.topDonors);
+          if (msg.tribulation) {
+            updateTribUI(true, msg.tribulation.ownerName, msg.tribulation.targetCm, msg.tribulation.currentPower, msg.tribulation.requiredPower);
+          }
           if (msg.settings) {
             if (msg.settings.readChat !== undefined) chatTTSEnabled = msg.settings.readChat;
             if (msg.settings.readJoin !== undefined) joinTTSEnabled = msg.settings.readJoin;
@@ -285,8 +288,6 @@
           }
         } else if (msg.t === 'tribulation_resolve') {
           updateTribUI(false);
-        } else if (msg.t === 'state' && msg.tribulation) {
-          updateTribUI(true, msg.tribulation.ownerName, msg.tribulation.targetCm, msg.tribulation.currentPower, msg.tribulation.requiredPower);
         } else if (msg.t === 'tts' && msg.url) {
           playControlAudio(msg.url);
         }
