@@ -2,10 +2,12 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   FISH,
+  FISH_MAX_HUNGER_TIME,
   MAX_FISH,
   SPINE_NODES,
 } from "./config";
 import { Koi, SwimState } from "./koi";
+import { createRandomFishAppearance } from "./fish-appearance";
 import { TinyFishSchools } from "./tiny-fish";
 import {
   add,
@@ -23,21 +25,103 @@ import {
   XorShift32,
 } from "./math";
 import { RippleSystem } from "./ripple-system";
+import type { TribulationState } from "./tribulation-types";
 
 export class School {
   public readonly fish: Koi[] = Array.from({ length: MAX_FISH }, () => new Koi());
   public readonly ripples = new RippleSystem();
   public readonly tinyFish = new TinyFishSchools();
 
-  public count: number = FISH.initialCount;
+  public tribulation: TribulationState | null = null;
+  public count: number;
   public targetActive = false;
+  public onFishHooked?: (userName: string) => void;
+  public onViewerSpawned?: (userName: string, breedName?: string) => void;
 
   private random = new XorShift32();
   private target = vec(CANVAS_WIDTH * 0.5, CANVAS_HEIGHT * 0.5);
   private targetAge = 0;
 
-  public constructor() {
+  public constructor(initialCount: number = FISH.initialCount) {
+    this.count = initialCount;
     this.fish.forEach((fish, index) => fish.reset(index, this.random));
+    this.fish[0].customAppearance = createRandomFishAppearance();
+  }
+
+  public spawnFishForViewer(id: string, name: string, avatar?: string): Koi {
+    const existing = this.fish.find((f) => f.ownerId === id);
+    if (existing) return existing;
+
+    let targetIndex = -1;
+    if (this.count < MAX_FISH) {
+      targetIndex = this.count;
+      this.count += 1;
+    } else {
+      for (let i = 1; i < this.count; i++) {
+        if (!this.fish[i].ownerId) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex === -1) {
+        let minHunger = Infinity;
+        let minIdx = 1;
+        for (let i = 1; i < this.count; i++) {
+          if (this.fish[i].hungerTimeLeft < minHunger) {
+            minHunger = this.fish[i].hungerTimeLeft;
+            minIdx = i;
+          }
+        }
+        targetIndex = minIdx;
+      }
+    }
+
+    const fish = this.fish[targetIndex];
+    fish.reset(targetIndex, this.random);
+    fish.ownerId = id;
+    fish.ownerName = name || "Khán giả";
+    fish.ownerAvatar = avatar || "";
+    fish.hunger = 100;
+    fish.maxHungerTime = FISH_MAX_HUNGER_TIME;
+    fish.hungerTimeLeft = FISH_MAX_HUNGER_TIME;
+    fish.isBeingFished = false;
+    fish.fishHookProgress = 0;
+    fish.eatCount = 0;
+    fish.sizeAlertTimer = 0;
+    fish.bodyLength = 18;
+    fish.bodyWidth = 18 * 0.22;
+    fish.position = vec(
+      CANVAS_WIDTH * 0.5 + this.random.range(-80, 80),
+      this.random.range(25, 75),
+    );
+    fish.speed = fish.maximumSpeed * 1.25;
+    fish.state = SwimState.Burst;
+    const randomAppearance = createRandomFishAppearance();
+    fish.customAppearance = randomAppearance;
+    this.ripples.trigger("touch", fish.position);
+    this.onViewerSpawned?.(fish.ownerName, randomAppearance.name);
+    return fish;
+  }
+
+  public removeFish(index: number): void {
+    if (index < 0 || index >= this.count) return;
+    const removedFish = this.fish[index];
+    removedFish.ownerId = null;
+    removedFish.ownerName = null;
+    removedFish.ownerAvatar = null;
+    removedFish.isBeingFished = false;
+    removedFish.customAppearance = null;
+    removedFish.fishHookProgress = 0;
+    removedFish.eatCount = 0;
+    removedFish.sizeAlertTimer = 0;
+    removedFish.hunger = 100;
+    removedFish.maxHungerTime = FISH_MAX_HUNGER_TIME;
+    removedFish.hungerTimeLeft = FISH_MAX_HUNGER_TIME;
+
+    // Shift remaining fish left, and move removed fish to the end beyond count
+    this.fish.splice(index, 1);
+    this.fish.push(removedFish);
+    this.count = Math.max(1, this.count - 1);
   }
 
   public setCount(count: number): void {
@@ -97,6 +181,7 @@ export class School {
   public reset(): void {
     this.random.state = 0x00c0ffee;
     this.fish.forEach((fish, index) => fish.reset(index, this.random));
+    this.fish[0].customAppearance = createRandomFishAppearance();
     this.tinyFish.reset();
     this.ripples.reset();
     this.targetActive = false;
@@ -174,6 +259,35 @@ export class School {
     for (let index = 0; index < this.count; index += 1) {
       const fish = this.fish[index];
       this.integrate(fish, desired[index], desiredSpeed[index], dt);
+
+      if (fish.sizeAlertTimer > 0) {
+        fish.sizeAlertTimer = Math.max(0, fish.sizeAlertTimer - dt);
+      }
+
+      // Hunger & Fishing mechanics for viewer-owned fish
+      if (fish.ownerId) {
+        if (!fish.isBeingFished) {
+          fish.hungerTimeLeft -= dt;
+          fish.hunger = Math.max(0, (fish.hungerTimeLeft / fish.maxHungerTime) * 100);
+          if (fish.hungerTimeLeft <= 0) {
+            fish.isBeingFished = true;
+            fish.fishHookProgress = 0;
+            this.ripples.trigger("touch", fish.position);
+            this.onFishHooked?.(fish.ownerName || "Khán giả");
+          }
+        } else {
+          fish.fishHookProgress += dt * 0.75;
+          fish.targetDepth = 0;
+          fish.depth = 0;
+          fish.speed = fish.cruiseSpeed * 0.25;
+          fish.angularVelocity += Math.sin(time * 25) * 1.5;
+          if (fish.fishHookProgress >= 1) {
+            this.ripples.trigger("touch", fish.position);
+            this.removeFish(index);
+            index -= 1;
+          }
+        }
+      }
     }
     this.tinyFish.update(dt, time);
 

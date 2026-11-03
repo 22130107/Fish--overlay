@@ -471,6 +471,7 @@ export class FishRenderer {
   public dispose(): void {
     this.overlayCanvas?.remove();
     this.lightning.clear();
+    this.smokeParticles = [];
     this.underwaterTarget.dispose();
     this.compositeTarget.dispose();
     this.surfaceDisturbance.dispose();

@@ -100,7 +100,7 @@ export class LiveClient {
     // Wire up tribulation events
     this.tribulation.onStart = (st) => {
       this.state.tribulation = { ...st };
-      (this.school as any).tribulation = { ...st };
+      this.school.tribulation = { ...st };
       this.pushEventAlert(
         `⚡ THIÊN KIẾP! Cá của ${st.ownerName} đang nghênh đón lôi kiếp!`,
         "info"
@@ -110,13 +110,13 @@ export class LiveClient {
 
     this.tribulation.onProgress = (st) => {
       this.state.tribulation = { ...st };
-      (this.school as any).tribulation = { ...st };
+      this.school.tribulation = { ...st };
       this.notify();
     };
 
     this.tribulation.onSuccess = (st) => {
       this.state.tribulation = { ...st };
-      (this.school as any).tribulation = null;
+      this.school.tribulation = null;
       const fish = this.school.fish
         .slice(0, this.school.count)
         .find((f) => f.ownerId === st.targetFishId);
@@ -151,7 +151,7 @@ export class LiveClient {
 
     this.tribulation.onFail = (st) => {
       this.state.tribulation = { ...st };
-      (this.school as any).tribulation = null;
+      this.school.tribulation = null;
       const fish = this.school.fish
         .slice(0, this.school.count)
         .find((f) => f.ownerId === st.targetFishId);
@@ -256,6 +256,17 @@ export class LiveClient {
         }
         if (msg.topDonors) {
           this.state.topDonors = msg.topDonors;
+        }
+        if (msg.tribulation && msg.tribulation.active) {
+          this.tribulation.start(
+            msg.tribulation.targetFishId,
+            msg.tribulation.ownerName,
+            msg.tribulation.ownerAvatar,
+            msg.tribulation.targetCm
+          );
+          this.tribulation.state.currentPower = msg.tribulation.currentPower || 0;
+          this.tribulation.state.timeLeft = msg.tribulation.timeLeft || 30.0;
+          this.state.tribulation = { ...this.tribulation.state };
         }
         this.notify();
         break;
@@ -561,12 +572,22 @@ export class LiveClient {
   public update(dt: number): void {
     if (this.tribulation.state.active) {
       this.tribulation.update(dt);
-      (this.school as any).tribulation = this.tribulation.state;
+      this.school.tribulation = this.tribulation.state;
       if (this.state.tribulation) {
         this.state.tribulation.timeLeft = this.tribulation.state.timeLeft;
       }
+      // Continuous protection for target fish during tribulation
+      const targetFish = this.school.fish
+        .slice(0, this.school.count)
+        .find((f) => f.ownerId === this.tribulation.state.targetFishId);
+      if (targetFish) {
+        targetFish.isBeingFished = false;
+        targetFish.fishHookProgress = 0;
+        targetFish.hunger = Math.max(targetFish.hunger, 50);
+        targetFish.hungerTimeLeft = Math.max(targetFish.hungerTimeLeft, targetFish.maxHungerTime * 0.5);
+      }
     } else {
-      (this.school as any).tribulation = null;
+      this.school.tribulation = null;
     }
 
     for (let i = 0; i < this.school.count; i++) {

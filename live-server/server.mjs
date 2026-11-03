@@ -284,6 +284,7 @@ function handleChat(id, name, text, avatar) {
   if (settings.rainKeyword) {
     for (const item of WEATHER_KEYWORDS) {
       if (item.words.some((w) => lower.includes(w))) {
+        if (currentTribulation) { return; } // Weather locked during tribulation
         addLog(`🌤️ ${name} đổi thời tiết: ${item.preset}`);
         broadcast({ t: 'weather', preset: item.preset, user: name });
         return;

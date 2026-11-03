@@ -10,10 +10,8 @@ function TribulationBanner({
 }: {
   tribulation: NonNullable<LiveStreamState["tribulation"]>;
 }) {
-  const percent = Math.min(
-    100,
-    Math.round((tribulation.currentPower / tribulation.requiredPower) * 100)
-  );
+  const req = Math.max(1, tribulation.requiredPower || 40);
+  const percent = Math.min(100, Math.round((tribulation.currentPower / req) * 100));
 
   const contributors = tribulation.contributors;
   const rawList: TribulationContributor[] = contributors

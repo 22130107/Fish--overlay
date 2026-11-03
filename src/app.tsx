@@ -1,4 +1,5 @@
 import {
+  Radio,
   Cloud,
   CloudFog,
   CloudRain,
@@ -7,11 +8,13 @@ import {
   Maximize2,
   Minus,
   Minimize2,
+  Monitor,
   Moon,
   Plus,
   RotateCcw,
   Settings2,
   Shuffle,
+  Smartphone,
   Sun,
   Sunset as SunsetIcon,
   Undo2,
@@ -27,8 +30,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { GitHubStars } from "@/components/github-stars";
-import { WallpaperAppLink } from "@/components/wallpaper-app-link";
+import { FoodSystem } from "./food-system";
+import { LiveClient, type LiveStreamState } from "./live-client";
+import { LiveOverlay } from "./components/live-overlay";
 import {
   Drawer,
   DrawerClose,
@@ -79,6 +83,7 @@ import { useSettingsMeta } from "./settings/react";
 import { settings } from "./settings/store";
 import type { SectionId } from "./settings/definition";
 import { School } from "./school";
+import { createRandomFishAppearance } from "./fish-appearance";
 import {
   DEFAULT_WEATHER_PRESET_ID,
   getWeatherPreset,
@@ -93,6 +98,7 @@ interface SceneStats {
 interface PondRuntime {
   school: School;
   renderer: FishRenderer;
+  foodSystem: FoodSystem;
   showDebug: boolean;
 }
 
@@ -101,30 +107,28 @@ const emptyStats: SceneStats = {
 };
 
 const AMBIENT_IDLE_DELAY_MS = 2400;
-const GITHUB_REPOSITORY = "msk1039/procedural-koi-threejs";
-const WALLPAPER_APP_URL = "https://nagomi.m4yank.com/";
 
 // Restores v2 (or migrates v1) localStorage settings into the store before
 // the first render, and wires up debounced+pagehide saving from then on.
 loadInto(settings);
 connectPersistence(settings);
 
-function pondRenderSize(display: HTMLElement): { width: number; height: number } {
+function pondRenderSize(
+  display: HTMLElement,
+  forceMobileView?: boolean,
+): { width: number; height: number } {
   const { width, height } = display.getBoundingClientRect();
-  const portrait =
-    window.matchMedia("(max-width: 700px) and (orientation: portrait)").matches &&
-    width > 0 &&
-    height > 0;
-  if (!portrait) return { width: CANVAS.width, height: CANVAS.height };
+  const isPortrait =
+    forceMobileView ||
+    (width > 0 && height > 0 && width < height) ||
+    (typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 700px) and (orientation: portrait)").matches);
 
-  const renderWidth = Math.min(
-    CANVAS.width,
-    Math.max(CANVAS.height, Math.round(width * 0.7)),
-  );
-  return {
-    width: renderWidth,
-    height: Math.max(CANVAS.height, Math.round((renderWidth * height) / width)),
-  };
+  if (isPortrait) {
+    // 9:16 mobile portrait ratio (270 x 480)
+    return { width: 270, height: 480 };
+  }
+  return { width: CANVAS.width, height: CANVAS.height };
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -163,18 +167,41 @@ function WeatherIcon({ id }: { id: WeatherPresetId }) {
 
 export function App() {
   const isMobile = useIsMobile();
+  const foodSystemRef = useRef<FoodSystem>(new FoodSystem());
+  const liveClientRef = useRef<LiveClient | null>(null);
+  const [liveState, setLiveState] = useState<LiveStreamState>({
+    connected: false,
+    tiktokConnected: false,
+    tiktokUsername: "",
+    topDonors: [],
+    currentGift: null,
+    latestEvent: null,
+  });
+  const isLiveInitial =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("live") === "1";
+  const isMobileInitial =
+    typeof window !== "undefined" &&
+    (() => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("mobile") === "1" || p.get("portrait") === "1" || p.get("phone") === "1") return true;
+      if (p.get("mobile") === "0" || p.get("desktop") === "1") return false;
+      return window.innerWidth < window.innerHeight;
+    })();
+  const [liveMode, setLiveMode] = useState<boolean>(() => isLiveInitial);
+  const [mobileView, setMobileView] = useState<boolean>(() => isMobileInitial);
+  const mobileViewRef = useRef(mobileView);
+  mobileViewRef.current = mobileView;
+  const [activeSchool, setActiveSchool] = useState<School | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ambientAudioContextRef = useRef<AudioContext | null>(null);
-  const ambientAudioGainRef = useRef<GainNode | null>(null);
-  const ambientAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const ambientAudioLoadingRef = useRef<Promise<void> | null>(null);
+  const ambientAudioElRef = useRef<HTMLAudioElement | null>(null);
   const runtimeRef = useRef<PondRuntime | null>(null);
   const ambientModeRef = useRef(false);
   const soundEnabledRef = useRef<boolean>(AUDIO.defaultEnabled);
   const [stats, setStats] = useState<SceneStats>(emptyStats);
-  const [showInterface, setShowInterface] = useState(true);
+  const [showInterface, setShowInterface] = useState<boolean>(() => !isLiveInitial);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientControlsVisible, setAmbientControlsVisible] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -231,6 +258,46 @@ export function App() {
     });
   }, []);
 
+  const toggleLiveMode = useCallback(() => {
+    setLiveMode((current) => {
+      const next = !current;
+      setShowInterface(!next);
+      if (next && runtimeRef.current) {
+        const school = runtimeRef.current.school;
+        const hasViewerFish = school.fish
+          .slice(0, school.count)
+          .some((f) => Boolean(f.ownerId));
+        if (!hasViewerFish) {
+          school.count = 1;
+          school.fish[0].customAppearance = createRandomFishAppearance();
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleMobileView = useCallback(() => {
+    setMobileView((current) => {
+      const next = !current;
+      mobileViewRef.current = next;
+      const runtime = runtimeRef.current;
+      const display = displayRef.current;
+      if (runtime && display) {
+        const nextSize = pondRenderSize(display, next);
+        const oldWidth = CANVAS_WIDTH;
+        const oldHeight = CANVAS_HEIGHT;
+        setCanvasSize(nextSize.width, nextSize.height);
+        runtime.school.resize(nextSize.width / oldWidth, nextSize.height / oldHeight);
+        runtime.renderer.resize(nextSize.width, nextSize.height, oldWidth, oldHeight);
+        for (const p of runtime.foodSystem.pellets) {
+          p.position.x = (p.position.x / oldWidth) * nextSize.width;
+          p.position.y = (p.position.y / oldHeight) * nextSize.height;
+        }
+      }
+      return next;
+    });
+  }, []);
+
   const changeKoiCount = useCallback((amount: number) => {
     const current = runtimeRef.current?.school.count ?? settings.live.koi.initialCount;
     settings.set(["koi", "initialCount"], clamp(current + amount, 1, 48));
@@ -283,69 +350,45 @@ export function App() {
     runtimeRef.current?.school.setRainIntensity(rainEnabled ? 1 : 0);
   }, [rainEnabled]);
 
-  const startAmbientAudio = useCallback(async (): Promise<void> => {
-    if (ambientAudioSourceRef.current) {
-      await ambientAudioContextRef.current?.resume();
-      return;
+  const startAmbientAudio = useCallback((): void => {
+    if (!ambientAudioElRef.current) {
+      const audio = new Audio(`${import.meta.env.BASE_URL}audio/ambient-river-v1.m4a`);
+      audio.loop = true;
+      audio.volume = AUDIO.ambient.volume;
+      ambientAudioElRef.current = audio;
     }
-    if (ambientAudioLoadingRef.current) {
-      await ambientAudioLoadingRef.current;
-      return;
-    }
-
-    const context = new AudioContext();
-    const gain = context.createGain();
-    gain.gain.value = soundEnabledRef.current ? AUDIO.ambient.volume : 0;
-    gain.connect(context.destination);
-    ambientAudioContextRef.current = context;
-    ambientAudioGainRef.current = gain;
-
-    const loading = (async (): Promise<void> => {
-      await context.resume();
-      const loadBuffer = async (path: string): Promise<AudioBuffer> => {
-        const response = await fetch(`${import.meta.env.BASE_URL}${path}`);
-        if (!response.ok) throw new Error(`Unable to load ${path}`);
-        return context.decodeAudioData(await response.arrayBuffer());
-      };
-      const ambientBuffer = await loadBuffer(AUDIO.ambient.source);
-      if (context.state === "closed") return;
-
-      const ambientSource = context.createBufferSource();
-      ambientSource.buffer = ambientBuffer;
-      ambientSource.loop = true;
-      ambientSource.connect(gain);
-      ambientSource.start();
-      ambientAudioSourceRef.current = ambientSource;
-    })();
-    ambientAudioLoadingRef.current = loading;
-    try {
-      await loading;
-    } finally {
-      ambientAudioLoadingRef.current = null;
+    const audio = ambientAudioElRef.current;
+    if (audio && soundEnabledRef.current) {
+      audio.play().catch(() => {
+        const unlock = () => {
+          window.removeEventListener("pointerdown", unlock);
+          window.removeEventListener("click", unlock);
+          window.removeEventListener("keydown", unlock);
+          if (soundEnabledRef.current && ambientAudioElRef.current) {
+            ambientAudioElRef.current.play().catch(() => {});
+          }
+        };
+        window.addEventListener("pointerdown", unlock);
+        window.addEventListener("click", unlock);
+        window.addEventListener("keydown", unlock);
+      });
     }
   }, []);
 
   const setAmbientSoundEnabled = useCallback((enabled: boolean) => {
     soundEnabledRef.current = enabled;
     setSoundEnabled(enabled);
-    if (enabled) void startAmbientAudio().catch(() => undefined);
-
-    const context = ambientAudioContextRef.current;
-    const gain = ambientAudioGainRef.current;
-    if (context && gain) {
-      const now = context.currentTime;
-      // cancelAndHoldAtTime is missing in Firefox; pin the current value manually there.
-      if (typeof gain.gain.cancelAndHoldAtTime === "function") {
-        gain.gain.cancelAndHoldAtTime(now);
-      } else {
-        const current = gain.gain.value;
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.setValueAtTime(current, now);
-      }
-      gain.gain.linearRampToValueAtTime(
-        enabled ? AUDIO.ambient.volume : 0,
-        now + AUDIO.toggleFadeSeconds,
-      );
+    if (!ambientAudioElRef.current) {
+      const audio = new Audio(`${import.meta.env.BASE_URL}audio/ambient-river-v1.m4a`);
+      audio.loop = true;
+      audio.volume = AUDIO.ambient.volume;
+      ambientAudioElRef.current = audio;
+    }
+    const audio = ambientAudioElRef.current;
+    if (enabled) {
+      startAmbientAudio();
+    } else if (audio) {
+      audio.pause();
     }
   }, [startAmbientAudio]);
 
@@ -380,29 +423,25 @@ export function App() {
   }, [setFamilyPreview]);
 
   useEffect(() => {
-    const unlockAmbientAudio = (): void => {
-      window.removeEventListener("pointerdown", unlockAmbientAudio);
-      window.removeEventListener("keydown", unlockAmbientAudio);
-      if (soundEnabledRef.current) {
-        void startAmbientAudio().catch(() => undefined);
-      }
+    startAmbientAudio();
+    const onUserGesture = () => {
+      startAmbientAudio();
     };
-
-    window.addEventListener("pointerdown", unlockAmbientAudio);
-    window.addEventListener("keydown", unlockAmbientAudio);
+    window.addEventListener("pointerdown", onUserGesture, { once: true });
+    window.addEventListener("click", onUserGesture, { once: true });
+    window.addEventListener("keydown", onUserGesture, { once: true });
     return () => {
-      window.removeEventListener("pointerdown", unlockAmbientAudio);
-      window.removeEventListener("keydown", unlockAmbientAudio);
+      window.removeEventListener("pointerdown", onUserGesture);
+      window.removeEventListener("click", onUserGesture);
+      window.removeEventListener("keydown", onUserGesture);
     };
   }, [startAmbientAudio]);
 
   useEffect(() => () => {
-    ambientAudioSourceRef.current?.stop();
-    ambientAudioSourceRef.current = null;
-    ambientAudioGainRef.current = null;
-    const context = ambientAudioContextRef.current;
-    ambientAudioContextRef.current = null;
-    if (context && context.state !== "closed") void context.close();
+    if (ambientAudioElRef.current) {
+      ambientAudioElRef.current.pause();
+      ambientAudioElRef.current = null;
+    }
   }, []);
 
   const changeWeather = useCallback((id: WeatherPresetId) => {
@@ -477,19 +516,25 @@ export function App() {
     const canvas = canvasRef.current;
     const display = displayRef.current;
     if (!canvas || !display) return;
-    const initialSize = pondRenderSize(display);
+    const initialSize = pondRenderSize(display, mobileViewRef.current);
     setCanvasSize(initialSize.width, initialSize.height);
-    const school = new School();
+    const isLive = new URLSearchParams(window.location.search).get("live") === "1";
+    const school = new School(isLive ? 1 : FISH.initialCount);
     const renderer = new FishRenderer(canvas);
-    const runtime: PondRuntime = { school, renderer, showDebug: false };
+    const foodSystem = foodSystemRef.current;
+    const runtime: PondRuntime = { school, renderer, foodSystem, showDebug: false };
+    const liveClient = new LiveClient(school, foodSystem);
+    liveClientRef.current = liveClient;
+    const unsubscribeLive = liveClient.subscribe((next) => setLiveState(next));
     runtimeRef.current = runtime;
+    setActiveSchool(school);
     const activeWeather = getWeatherPreset(settings.meta().weather);
     renderer.setWeatherPreset(activeWeather.id);
     school.setRainIntensity(settings.meta().rain ? 1 : 0);
     const disconnectEffects = connectSettingsEffects(settings, { school, renderer });
 
     const resizeObserver = new ResizeObserver(() => {
-      const nextSize = pondRenderSize(display);
+      const nextSize = pondRenderSize(display, mobileViewRef.current);
       if (nextSize.width === CANVAS_WIDTH && nextSize.height === CANVAS_HEIGHT) return;
       const oldWidth = CANVAS_WIDTH;
       const oldHeight = CANVAS_HEIGHT;
@@ -517,6 +562,8 @@ export function App() {
       while (accumulator >= FIXED_STEP) {
         simulationTime += FIXED_STEP;
         school.update(FIXED_STEP, simulationTime);
+        foodSystem.update(FIXED_STEP, school);
+        liveClient.update(FIXED_STEP);
         accumulator -= FIXED_STEP;
       }
 
@@ -551,6 +598,10 @@ export function App() {
           event.preventDefault();
           void toggleAmbientMode();
           break;
+        case "KeyM":
+          event.preventDefault();
+          toggleMobileView();
+          break;
         default:
           return;
       }
@@ -561,8 +612,48 @@ export function App() {
     setStats(sceneStats(runtime));
     animationFrame = requestAnimationFrame(animate);
 
+    // Keep simulation ticking in background without piling up WebGL frame renders
+    let bgInterval = 0;
+    const handleVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        if (!bgInterval) {
+          bgInterval = window.setInterval(() => {
+            const now = performance.now();
+            accumulator += Math.min((now - previousTime) / 1000, 0.1);
+            previousTime = now;
+            while (accumulator >= FIXED_STEP) {
+              simulationTime += FIXED_STEP;
+              school.update(FIXED_STEP, simulationTime);
+              foodSystem.update(FIXED_STEP, school);
+              liveClient.update(FIXED_STEP);
+              accumulator -= FIXED_STEP;
+            }
+          }, 1000 / 20);
+        }
+      } else {
+        if (bgInterval) {
+          window.clearInterval(bgInterval);
+          bgInterval = 0;
+        }
+        previousTime = performance.now();
+        accumulator = 0;
+        if (!animationFrame) {
+          animationFrame = requestAnimationFrame(animate);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       cancelAnimationFrame(animationFrame);
+      if (bgInterval) window.clearInterval(bgInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      setActiveSchool(null);
+      unsubscribeLive();
+      liveClient.dispose();
+      liveClientRef.current = null;
       disconnectEffects();
       resizeObserver.disconnect();
       window.removeEventListener("keydown", handleKeyDown);
@@ -611,6 +702,8 @@ export function App() {
     <main
       ref={stageRef}
       className={`stage${ambientMode ? " stage--ambient" : ""}${
+        mobileView ? " stage--mobile" : ""
+      }${
         ambientUiHidden
           ? " stage--ambient-idle"
           : ""
@@ -626,9 +719,17 @@ export function App() {
             aria-label="Animated procedural koi"
             onPointerDown={callFish}
           />
+          {activeSchool && (
+            <LiveOverlay
+              school={activeSchool}
+              foodSystem={foodSystemRef.current}
+              liveState={liveState}
+              showOverlay={liveMode}
+            />
+          )}
           {previewFamily !== null && settingsOpen && (
             <div className="pond-preview-label" aria-live="polite">
-              {settings.live["koi-palettes"][previewFamily]?.name ?? "Koi"} family preview
+              Xem trước dòng cá {settings.live["koi-palettes"][previewFamily]?.name ?? "Koi"}
             </div>
           )}
         </div>
@@ -641,14 +742,35 @@ export function App() {
                 : ""
             }`}
           >
-            <header className="brand-float">
-              <h1 className="brand-wordmark">nagomi</h1>
-            </header>
-
             <div className="top-actions">
-              <GitHubStars repo={GITHUB_REPOSITORY} stargazersCount={2} />
+              <Button
+                variant={mobileView ? "secondary" : "ghost"}
+                size="sm"
+                className="view-mode-btn"
+                onClick={toggleMobileView}
+                aria-label={mobileView ? "Chuyển sang 16:9 Máy tính" : "Chuyển sang 9:16 Điện thoại"}
+                title={mobileView ? "Chế độ máy tính 16:9 (Phím M)" : "Chế độ điện thoại 9:16 (Phím M)"}
+                style={{ gap: "6px" }}
+              >
+                {mobileView ? (
+                  <Monitor aria-hidden="true" style={{ width: "15px", height: "15px" }} />
+                ) : (
+                  <Smartphone aria-hidden="true" style={{ width: "15px", height: "15px" }} />
+                )}
+                <span>{mobileView ? "Điện thoại (9:16)" : "Máy tính (16:9)"}</span>
+              </Button>
               <Separator orientation="vertical" />
-              <WallpaperAppLink href={WALLPAPER_APP_URL} />
+              <Button
+                variant={liveMode ? "secondary" : "ghost"}
+                size="sm"
+                className="live-toggle-btn"
+                onClick={toggleLiveMode}
+                aria-label="Bật tắt chế độ Live Stream"
+                style={{ gap: "6px" }}
+              >
+                <Radio aria-hidden="true" style={{ width: "15px", height: "15px", color: liveState.connected ? "#10b981" : "inherit" }} />
+                <span>{liveMode ? "Live Đang Bật" : "Bật Live"}</span>
+              </Button>
               <Separator orientation="vertical" />
               <Drawer
                 open={settingsOpen}
@@ -663,24 +785,24 @@ export function App() {
                   <Button
                     className="settings-trigger"
                     variant="ghost"
-                    aria-label="Open pond settings"
+                    aria-label="Mở cài đặt hồ cá"
                   />
                 }
               >
                 <Settings2 aria-hidden="true" />
-                <span>Settings</span>
+                <span>Cài đặt</span>
               </DrawerTrigger>
               <DrawerContent className="settings-drawer">
                 <DrawerHeader className="settings-drawer__header">
                   <div>
-                    <DrawerTitle>Pond settings</DrawerTitle>
+                    <DrawerTitle>Cài đặt hồ cá</DrawerTitle>
                     <DrawerDescription>
-                      Changes preview in the pond and save on this device.
+                      Các thay đổi hiển thị trực tiếp trong hồ và được lưu trên thiết bị này.
                     </DrawerDescription>
                   </div>
                   <DrawerClose
                     render={
-                      <Button variant="ghost" size="icon" aria-label="Close settings" />
+                      <Button variant="ghost" size="icon" aria-label="Đóng cài đặt" />
                     }
                   >
                     <X aria-hidden="true" />
@@ -706,20 +828,20 @@ export function App() {
                 </div>
                 <DrawerFooter className="settings-drawer__footer">
                   {confirmResetAll ? (
-                    <div className="settings-reset-confirm" role="group" aria-label="Confirm reset all settings">
-                      <span>Reset all settings on this device?</span>
-                      <Button variant="ghost" onClick={() => setConfirmResetAll(false)}>Cancel</Button>
-                      <Button variant="destructive" onClick={resetSettings}>Reset all</Button>
+                    <div className="settings-reset-confirm" role="group" aria-label="Xác nhận đặt lại tất cả cài đặt">
+                      <span>Đặt lại tất cả cài đặt trên thiết bị này?</span>
+                      <Button variant="ghost" onClick={() => setConfirmResetAll(false)}>Hủy</Button>
+                      <Button variant="destructive" onClick={resetSettings}>Đặt lại tất cả</Button>
                     </div>
                   ) : (
                     <>
                       <Button variant="ghost" onClick={undoLastInteraction} disabled={!canUndo}>
-                        <Undo2 aria-hidden="true" /> Undo
+                        <Undo2 aria-hidden="true" /> Hoàn tác
                       </Button>
                       <Button variant="outline" onClick={() => setConfirmResetAll(true)}>
-                        <RotateCcw aria-hidden="true" /> Reset all
+                        <RotateCcw aria-hidden="true" /> Đặt lại tất cả
                       </Button>
-                      <DrawerClose render={<Button />}>Done</DrawerClose>
+                      <DrawerClose render={<Button />}>Xong</DrawerClose>
                     </>
                   )}
                 </DrawerFooter>
@@ -728,6 +850,8 @@ export function App() {
             </div>
           </div>
         )}
+
+
 
         {showInterface && (
           <nav
@@ -739,6 +863,22 @@ export function App() {
             aria-label="Simulation controls"
           >
             <div className="control-group control-group--view">
+              <Button
+                variant={mobileView ? "secondary" : "ghost"}
+                size="sm"
+                onClick={toggleMobileView}
+                aria-label={mobileView ? "Chế độ máy tính 16:9" : "Chế độ điện thoại 9:16"}
+                aria-keyshortcuts="M"
+                title={mobileView ? "Chuyển sang 16:9 máy tính (Phím M)" : "Chuyển sang 9:16 điện thoại (Phím M)"}
+              >
+                {mobileView ? (
+                  <Monitor aria-hidden="true" />
+                ) : (
+                  <Smartphone aria-hidden="true" />
+                )}
+                <span className="control-label">{mobileView ? "Máy tính" : "Điện thoại"}</span>
+                <Kbd className="control-shortcut">M</Kbd>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -752,7 +892,7 @@ export function App() {
                 ) : (
                   <Maximize2 aria-hidden="true" />
                 )}
-                <span className="control-label">{ambientMode ? "Exit" : "Ambient"}</span>
+                <span className="control-label">{ambientMode ? "Thoát" : "Thư giãn"}</span>
                 <Kbd className="control-shortcut">F</Kbd>
               </Button>
               <DropdownMenu
@@ -802,11 +942,11 @@ export function App() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowInterface(false)}
-                aria-label="Hide interface"
+                aria-label="Ẩn giao diện"
                 aria-keyshortcuts="H"
               >
                 <EyeOff aria-hidden="true" />
-                <span className="control-label">Hide UI</span>
+                <span className="control-label">Ẩn giao diện</span>
                 <Kbd className="control-shortcut">H</Kbd>
               </Button>
             </div>
@@ -819,7 +959,7 @@ export function App() {
                 aria-keyshortcuts="Space"
               >
                 <Shuffle aria-hidden="true" />
-                <span className="control-label">Scatter</span>
+                <span className="control-label">Khuấy động</span>
                 <Kbd className="control-shortcut">Space</Kbd>
               </Button>
               <Separator orientation="vertical" />
@@ -892,7 +1032,7 @@ export function App() {
               </DropdownMenu>
               <div className="rain-control">
                 <CloudRain aria-hidden="true" />
-                <span className="rain-control__label">Rain</span>
+                <span className="rain-control__label">Mưa</span>
                 <Switch
                   size="sm"
                   checked={rainEnabled}
@@ -902,7 +1042,7 @@ export function App() {
               </div>
               <div className="rain-control">
                 <Volume2 aria-hidden="true" />
-                <span className="rain-control__label">Sound</span>
+                <span className="rain-control__label">Âm thanh</span>
                 <Switch
                   size="sm"
                   checked={soundEnabled}
