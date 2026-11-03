@@ -62,6 +62,7 @@ export class LiveClient {
   private giftDismissTimer: number | null = null;
   private alertDismissTimer: number | null = null;
   private alertSeq = 1;
+  private transformationTimers: any[] = [];
 
   public constructor(
     private readonly school: School,
@@ -125,6 +126,11 @@ export class LiveClient {
         if (st.targetCm >= 82) {
           fish.passedTribulation82 = true;
           fish.tribulationAura = "dragon";
+          (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
+          this.school.ripples.trigger("touch", fish.position);
+          const t1 = setTimeout(() => this.school.ripples.trigger("touch", fish.position), 150);
+          const t2 = setTimeout(() => this.school.ripples.trigger("touch", fish.position), 300);
+          this.transformationTimers.push(t1, t2);
         } else {
           fish.passedTribulation72 = true;
           fish.tribulationAura = "dragon";
@@ -603,6 +609,8 @@ export class LiveClient {
 
   public dispose(): void {
     if (this.reconnectTimer) window.clearTimeout(this.reconnectTimer);
+    for (const t of this.transformationTimers) clearTimeout(t);
+    this.transformationTimers = [];
     if (this.giftDismissTimer) window.clearTimeout(this.giftDismissTimer);
     if (this.alertDismissTimer) window.clearTimeout(this.alertDismissTimer);
     if (this.ws) {
