@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng Điều Khiển Live · Hồ Cá Koi</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #091312;
+      --card: #112220;
+      --card-border: #1d3b37;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --gold: #f59e0b;
+      --red: #ef4444;
+      --text: #f0fdf4;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    h1 { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #0f2925;
+      border: 1px solid var(--card-border);
+      font-size: 13px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #64748b; }
+    .dot.connected { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .dot.connecting { background: var(--gold); }
+    .dot.error { background: var(--red); }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 14px; color: #a7f3d0; }
+
+    .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    input {
+      flex: 1;
+      background: #091a18;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    button {
+      background: var(--accent);
+      color: #042f2e;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: var(--accent-hover); }
+    button.secondary { background: #164e63; color: #ecfeff; }
+    button.secondary:hover { background: #0891b2; }
+    button.danger { background: #7f1d1d; color: #fee2e2; }
+    button.danger:hover { background: var(--red); }
+    button.gold { background: var(--gold); color: #451a03; }
+    button.gold:hover { background: #d97706; }
+
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .donor-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .donor-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #091a18;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .donor-coins { color: var(--gold); font-weight: 600; }
+
+    .log-box {
+      height: 180px;
+      background: #060e0d;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: #94a3b8;
+    }
+    .log-line { word-break: break-all; }
+    .open-overlay-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: #0284c7;
+      color: white;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎏 Hồ Cá Koi — Bảng Điều Khiển Live</h1>
+      <div class="status-badge">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Chưa kết nối TikTok</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- TikTok Connection Card -->
+      <div class="card">
+        <h2>Kết Nối TikTok LIVE</h2>
+        <div class="input-row">
+          <input type="text" id="usernameInput" placeholder="Nhập @username của kênh LIVE..." value="" />
+          <button id="connectBtn" onclick="toggleConnect()">Kết nối</button>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+          Chỉ cần nhập tên kênh đang phát LIVE (không cần mật khẩu).
+        </p>
+        <a href="http://localhost:5173/?live=1" target="_blank" class="open-overlay-btn">
+          Mở Màn Hình Bể Cá Live Overlay
+        </a>
+      </div>
+
+      <!-- Test Controls -->
+      <div class="card">
+        <h2>Thử Nghiệm Tương Tác (Simulator)</h2>
+        <div class="btn-group" style="margin-bottom: 12px;">
+          <button class="secondary" onclick="testNewUserFish()">👋 Người mới vào xem (Cấp 1 cá)</button>
+          <button class="secondary" onclick="testExistingUserFeed()">🥖 Bình luận (Thả mồi)</button>
+          <button class="secondary" onclick="testQuerySize()">☯️ Gõ "size" (Soi Tu Tiên)</button>
+          <button class="secondary" onclick="testShare()">🚀 Chia sẻ Live</button>
+          <button class="secondary" onclick="testLike()">❤️ Thả tim</button>
+          <button class="gold" onclick="testGift('Hoa hồng', 1, 1)">🌹 Tặng Hoa hồng</button>
+          <button class="gold" onclick="testGift('Mũ miện', 1, 99)">👑 Tặng Mũ miện</button>
+        </div>
+        <div class="btn-group">
+          <button class="secondary" onclick="testWeather('rain')">🌧️ Mưa</button>
+          <button class="secondary" onclick="testWeather('sunset')">🌇 Hoàng hôn</button>
+          <button class="secondary" onclick="testWeather('moonlight')">🌙 Ánh trăng</button>
+          <button class="danger" onclick="testScatter()">⚡ Giật mình (Scatter)</button>
+        </div>
+        <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="ttsChatBtn" class="secondary" onclick="toggleChatTTS()">🔊 Giọng đọc bình luận: BẬT</button>
+          <button id="ttsJoinBtn" class="secondary" onclick="toggleJoinTTS()">🔊 Giọng đọc vào xem: BẬT</button>
+          <button id="ttsShareBtn" class="secondary" onclick="toggleShareTTS()">🔊 Giọng đọc chia sẻ: BẬT</button>
+          <button id="botBtn" class="secondary" onclick="toggleBots()">🤖 Bật Bot Tự Động Test</button>
+        </div>
+      </div>
+
+      <!-- Tribulation Testing Card -->
+      <div class="card" style="border-color: #f59e0b;">
+        <h2 style="color: #fbbf24; display: flex; align-items: center; justify-content: space-between;">
+          <span>⚡ Thử Nghiệm Thiên Kiếp (Lôi Đình Độ Kiếp)</span>
+          <span id="tribStatusBadge" style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #1e293b; color: #94a3b8;">Chưa kích hoạt</span>
+        </h2>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+          Kích hoạt và mô phỏng sự kiện Lôi Đình Độ Kiếp (72cm & 82cm) theo thời gian thực.
+        </p>
+        <div class="btn-group" style="margin-bottom: 12px;">
+          <button class="gold" onclick="triggerTribulation(72)">⚡ Test Lôi Kiếp 72cm</button>
+          <button class="gold" onclick="triggerTribulation(82)">🐉 Test Lôi Kiếp 82cm</button>
+          <button class="secondary" onclick="addTribulationPowerPoints(5)">⚡ +5 Lực Hộ Pháp</button>
+          <button class="secondary" style="background: #065f46; color: #a7f3d0;" onclick="resolveTribulationNow(true)">🏆 Thắng Ngay</button>
+          <button class="danger" onclick="resolveTribulationNow(false)">🌩️ Thua Ngay</button>
+        </div>
+        <div id="tribulationInfoBox" style="font-size: 12px; background: #060e0d; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--card-border); color: #cbd5e1; display: none;">
+          <div style="margin-bottom: 4px;"><b>Đạo hữu:</b> <span id="tribOwner">-</span> (<span id="tribCm">72</span>cm)</div>
+          <div><b>Lực Hộ Pháp:</b> <span id="tribPower">0</span> / <span id="tribRequired">40</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Donors -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>Bảng Vàng Tài Trợ Hồ Cá</h2>
+        <button class="danger" style="padding: 4px 10px; font-size: 12px;" onclick="clearDonors()">Xóa bảng</button>
+      </div>
+      <ul class="donor-list" id="donorList">
+        <li style="color: var(--muted); font-size: 13px;">Chưa có người tài trợ nào.</li>
+      </ul>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+      <h2>Nhật Ký Sự Kiện Realtime</h2>
+      <div class="log-box" id="logBox"></div>
+    </div>
+  </div>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.host}/?role=control`);
+    let isConnected = false;
+    let botsRunning = false;
+    let chatTTSEnabled = true;
+    let nextUserId = 1;
+
+    const audioQueue = [];
+    let isPlayingAudio = false;
+    const ctrlAudio = new Audio();
+
+    function playControlAudio(url) {
+      audioQueue.push(url);
+      processCtrlAudio();
+    }
+
+    function processCtrlAudio() {
+      if (isPlayingAudio || audioQueue.length === 0) return;
+      const nextUrl = audioQueue.shift();
+      isPlayingAudio = true;
+      ctrlAudio.src = nextUrl;
+      ctrlAudio.onended = () => {
+        isPlayingAudio = false;
+        setTimeout(processCtrlAudio, 200);
+      };
+      ctrlAudio.onerror = () => {
+        isPlayingAudio = false;
+        setTimeout(processCtrlAudio, 200);
+      };
+      ctrlAudio.play().catch(() => {
+        isPlayingAudio = false;
+      });
+    }
+
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.t === 'tiktok') {
+          updateTikTokState(msg);
+        } else if (msg.t === 'log') {
+          appendLog(msg.line);
+        } else if (msg.t === 'state') {
+          if (msg.tiktok) updateTikTokState(msg.tiktok);
+          if (msg.topDonors) updateDonors(msg.topDonors);
+          if (msg.settings) {
+            if (msg.settings.readChat !== undefined) chatTTSEnabled = msg.settings.readChat;
+            if (msg.settings.readJoin !== undefined) joinTTSEnabled = msg.settings.readJoin;
+            if (msg.settings.readShare !== undefined) shareTTSEnabled = msg.settings.readShare;
+            updateTTSButtons();
+          }
+        } else if (msg.t === 'gift') {
+          if (msg.topDonors) updateDonors(msg.topDonors);
+        } else if (msg.t === 'tribulation_start') {
+          updateTribUI(true, msg.ownerName, msg.targetCm, 0, msg.targetCm >= 82 ? 60 : 40);
+        } else if (msg.t === 'tribulation_power') {
+          const powerEl = document.getElementById('tribPower');
+          if (powerEl) {
+            const current = parseInt(powerEl.innerText) || 0;
+            powerEl.innerText = current + (msg.points || 1);
+          }
+        } else if (msg.t === 'tribulation_resolve') {
+          updateTribUI(false);
+        } else if (msg.t === 'state' && msg.tribulation) {
+          updateTribUI(true, msg.tribulation.ownerName, msg.tribulation.targetCm, msg.tribulation.currentPower, msg.tribulation.requiredPower);
+        } else if (msg.t === 'tts' && msg.url) {
+          playControlAudio(msg.url);
+        }
+      } catch (err) {}
+    };
+
+    let joinTTSEnabled = true;
+    let shareTTSEnabled = true;
+
+    function updateTTSButtons() {
+      const cBtn = document.getElementById('ttsChatBtn');
+      if (cBtn) {
+        cBtn.innerText = chatTTSEnabled ? '🔊 Giọng đọc bình luận: BẬT' : '🔇 Giọng đọc bình luận: TẮT';
+        cBtn.className = chatTTSEnabled ? 'secondary' : 'danger';
+      }
+      const jBtn = document.getElementById('ttsJoinBtn');
+      if (jBtn) {
+        jBtn.innerText = joinTTSEnabled ? '🔊 Giọng đọc vào xem: BẬT' : '🔇 Giọng đọc vào xem: TẮT';
+        jBtn.className = joinTTSEnabled ? 'secondary' : 'danger';
+      }
+      const sBtn = document.getElementById('ttsShareBtn');
+      if (sBtn) {
+        sBtn.innerText = shareTTSEnabled ? '🔊 Giọng đọc chia sẻ: BẬT' : '🔇 Giọng đọc chia sẻ: TẮT';
+        sBtn.className = shareTTSEnabled ? 'secondary' : 'danger';
+      }
+    }
+
+    function toggleChatTTS() {
+      chatTTSEnabled = !chatTTSEnabled;
+      ws.send(JSON.stringify({ cmd: 'toggleReadChat', enabled: chatTTSEnabled }));
+      updateTTSButtons();
+    }
+
+    function toggleJoinTTS() {
+      joinTTSEnabled = !joinTTSEnabled;
+      ws.send(JSON.stringify({ cmd: 'toggleReadJoin', enabled: joinTTSEnabled }));
+      updateTTSButtons();
+    }
+
+    function toggleShareTTS() {
+      shareTTSEnabled = !shareTTSEnabled;
+      ws.send(JSON.stringify({ cmd: 'toggleReadShare', enabled: shareTTSEnabled }));
+      updateTTSButtons();
+    }
+
+    function updateTikTokState(state) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const btn = document.getElementById('connectBtn');
+
+      dot.className = 'dot ' + state.status;
+      if (state.status === 'connected') {
+        text.innerText = `Đã kết nối: @${state.uniqueId}`;
+        btn.innerText = 'Ngắt kết nối';
+        btn.className = 'danger';
+        isConnected = true;
+      } else if (state.status === 'connecting') {
+        text.innerText = `Đang kết nối @${state.uniqueId}...`;
+        btn.innerText = 'Hủy';
+        isConnected = false;
+      } else if (state.status === 'error') {
+        text.innerText = `Lỗi: ${state.error}`;
+        btn.innerText = 'Thử lại';
+        btn.className = '';
+        isConnected = false;
+      } else {
+        text.innerText = 'Chưa kết nối TikTok';
+        btn.innerText = 'Kết nối';
+        btn.className = '';
+        isConnected = false;
+      }
+    }
+
+    function toggleConnect() {
+      if (isConnected) {
+        ws.send(JSON.stringify({ cmd: 'disconnect' }));
+      } else {
+        const uniqueId = document.getElementById('usernameInput').value.trim();
+        if (!uniqueId) return alert('Vui lòng nhập @username TikTok!');
+        ws.send(JSON.stringify({ cmd: 'connect', uniqueId }));
+      }
+    }
+
+    const DEMO_NAMES = ['Bảo Ngọc', 'Minh Tuấn', 'Phương Thảo', 'Hải Đăng', 'Thu Hà', 'Đức Anh', 'Diệu Linh', 'Trung Kiên', 'Lan Anh', 'Thanh Tùng', 'Hữu Nhân', 'Văn Nam'];
+
+    function testNewUserFish() {
+      const name = DEMO_NAMES[nextUserId % DEMO_NAMES.length] + ' ' + nextUserId;
+      ws.send(JSON.stringify({ cmd: 'join', id: 'user_' + nextUserId, name }));
+      nextUserId++;
+    }
+
+    function testExistingUserFeed() {
+      const targetId = Math.max(1, nextUserId - 1);
+      const name = DEMO_NAMES[targetId % DEMO_NAMES.length] + ' ' + targetId;
+      ws.send(JSON.stringify({ cmd: 'chat', id: 'user_' + targetId, name, text: 'Thả mồi cho cá ăn nè!' }));
+    }
+
+    function testQuerySize() {
+      const targetId = Math.max(1, nextUserId - 1);
+      const name = DEMO_NAMES[targetId % DEMO_NAMES.length] + ' ' + targetId;
+      ws.send(JSON.stringify({ cmd: 'chat', id: 'user_' + targetId, name, text: 'size cá' }));
+    }
+
+    function testShare() {
+      const targetId = Math.max(1, nextUserId - 1);
+      const name = DEMO_NAMES[targetId % DEMO_NAMES.length] + ' ' + targetId;
+      ws.send(JSON.stringify({ cmd: 'share', id: 'user_' + targetId, name }));
+    }
+
+    function testGift(gift, count, diamonds) {
+      ws.send(JSON.stringify({ cmd: 'gift', name: 'Đại Gia ' + Math.floor(Math.random() * 10), gift, count, diamonds }));
+    }
+
+    function testLike() {
+      ws.send(JSON.stringify({ cmd: 'like', name: 'Người xem', count: 5 }));
+    }
+
+    function testWeather(preset) {
+      ws.send(JSON.stringify({ cmd: 'weather', preset }));
+    }
+
+    function testScatter() {
+      ws.send(JSON.stringify({ cmd: 'scatter' }));
+    }
+
+    function toggleBots() {
+      botsRunning = !botsRunning;
+      ws.send(JSON.stringify({ cmd: 'bots', enabled: botsRunning }));
+      const btn = document.getElementById('botBtn');
+      btn.innerText = botsRunning ? '🛑 Dừng Bot Tự Động' : '🤖 Bật Bot Tự Động Test';
+      btn.className = botsRunning ? 'danger' : 'secondary';
+    }
+
+    function clearDonors() {
+      if (confirm('Bạn có chắc muốn xóa bảng xếp hạng nhà tài trợ?')) {
+        ws.send(JSON.stringify({ cmd: 'clearDonors' }));
+      }
+    }
+
+    function updateDonors(list) {
+      const container = document.getElementById('donorList');
+      if (!list || list.length === 0) {
+        container.innerHTML = '<li style="color: var(--muted); font-size: 13px;">Chưa có người tài trợ nào.</li>';
+        return;
+      }
+      container.innerHTML = list.map((d, i) => `
+        <li class="donor-item">
+          <span><b>#${i + 1}</b> ${d.name}</span>
+          <span class="donor-coins">💎 ${d.coins} (${d.count} quà)</span>
+        </li>
+      `).join('');
+    }
+
+    function appendLog(line) {
+      const box = document.getElementById('logBox');
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.textContent = line;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function triggerTribulation(cm) {
+      try {
+        const res = await fetch(`/api/tribulation/test?cm=${cm}&name=Đạo+Hữu+${Math.floor(10 + Math.random() * 90)}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        appendLog(`⚡ Đã kích hoạt test Lôi Kiếp ${cm}cm`);
+      } catch (err) {
+        appendLog(`❌ Lỗi gọi API test kiếp: ${err.message}`);
+      }
+    }
+
+    async function addTribulationPowerPoints(pts = 5) {
+      try {
+        const res = await fetch(`/api/tribulation/power?points=${pts}&source=chat&user=Đạo+Hữu+Trợ+Lực`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          appendLog(`⚡ Đã bơm +${pts} Lực Hộ Pháp (${data.currentPower}/${data.requiredPower})`);
+        } else {
+          appendLog(`ℹ️ ${data.error || 'Chưa có Thiên Kiếp nào đang diễn ra'}`);
+        }
+      } catch (err) {
+        appendLog(`❌ Lỗi bơm lực: ${err.message}`);
+      }
+    }
+
+    async function resolveTribulationNow(win) {
+      try {
+        const res = await fetch(`/api/tribulation/resolve?success=${win}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          appendLog(win ? '🏆 Đã giải quyết Thiên Kiếp: THÀNH CÔNG' : '🌩️ Đã giải quyết Thiên Kiếp: THẤT BẠI');
+        } else {
+          appendLog(`ℹ️ ${data.error || 'Chưa có Thiên Kiếp nào đang diễn ra'}`);
+        }
+      } catch (err) {
+        appendLog(`❌ Lỗi kết thúc kiếp: ${err.message}`);
+      }
+    }
+
+    function updateTribUI(active, owner = '', cm = 72, current = 0, required = 40) {
+      const badge = document.getElementById('tribStatusBadge');
+      const box = document.getElementById('tribulationInfoBox');
+      const ownerEl = document.getElementById('tribOwner');
+      const cmEl = document.getElementById('tribCm');
+      const powerEl = document.getElementById('tribPower');
+      const reqEl = document.getElementById('tribRequired');
+
+      if (!badge || !box) return;
+
+      if (active) {
+        badge.innerText = `Đang độ kiếp (${cm}cm)`;
+        badge.style.background = '#064e3b';
+        badge.style.color = '#6ee7b7';
+        box.style.display = 'block';
+        if (ownerEl) ownerEl.innerText = owner;
+        if (cmEl) cmEl.innerText = cm;
+        if (powerEl) powerEl.innerText = current;
+        if (reqEl) reqEl.innerText = required;
+      } else {
+        badge.innerText = 'Chưa kích hoạt';
+        badge.style.background = '#1e293b';
+        badge.style.color = '#94a3b8';
+        box.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
