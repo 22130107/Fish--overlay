@@ -4,6 +4,6 @@ export const AUDIO = {
   toggleFadeSeconds: 0.45,
   ambient: {
     source: "audio/ambient-river-v1.m4a",
-    volume: 0.3,
+    volume: 0.5,
   },
 } as const;

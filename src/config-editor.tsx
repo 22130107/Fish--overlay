@@ -81,7 +81,7 @@ function itemLabel(node: AnyNode, path: SettingPath, index: number): string {
     const value = settings.get([...path, "name"]);
     if (typeof value === "string" && value) return value;
   }
-  return `Item ${index + 1}`;
+  return `Mục ${index + 1}`;
 }
 
 function LeafControl({ node, path, label }: { node: AnyNode; path: SettingPath; label: string }) {
@@ -173,18 +173,18 @@ function LeafControl({ node, path, label }: { node: AnyNode; path: SettingPath; 
         <div className="config-cluster" data-base-ui-swipe-ignore>
           <div className="config-cluster__label">{prettify(label)}</div>
           <div className="config-property-row" data-base-ui-swipe-ignore>
-            <Label>Minimum</Label>
+            <Label>Tối thiểu</Label>
             <SettingsSlider
-              label="Minimum" aria-label="Minimum value" showLabel={false}
+              label="Tối thiểu" aria-label="Giá trị tối thiểu" showLabel={false}
               min={node.min} max={value[1]} step={node.step} value={value[0]}
               onValueChange={(next) => setValue([next, value[1]], key)}
               formatValue={formatNumber} className="drawer-elastic-slider"
             />
           </div>
           <div className="config-property-row" data-base-ui-swipe-ignore>
-            <Label>Maximum</Label>
+            <Label>Tối đa</Label>
             <SettingsSlider
-              label="Maximum" aria-label="Maximum value" showLabel={false}
+              label="Tối đa" aria-label="Giá trị tối đa" showLabel={false}
               min={value[0]} max={node.max} step={node.step} value={value[1]}
               onValueChange={(next) => setValue([value[0], next], key)}
               formatValue={formatNumber} className="drawer-elastic-slider"
@@ -336,7 +336,7 @@ function AdvancedGroup({
       {isOpen && (
         <div className="config-advanced-group__body">
           <button type="button" className="settings-section-reset" onClick={() => onResetSection(group.sectionIds)}>
-            <RotateCcw aria-hidden="true" /> Reset {group.title.toLowerCase()}
+            <RotateCcw aria-hidden="true" /> Đặt lại {group.title.toLowerCase()}
           </button>
           {group.sectionIds.map((sectionId) => (
             <section className="config-advanced-section" key={sectionId}>
@@ -415,8 +415,8 @@ export const ConfigEditor = memo(function ConfigEditor({
         <summary>
           <ChevronRight aria-hidden="true" />
           <span>
-            <strong>Advanced controls</strong>
-            <small>Fine-tune motion, shapes, colors, and individual placements.</small>
+            <strong>Điều khiển nâng cao</strong>
+            <small>Tinh chỉnh chuyển động, hình dáng, màu sắc và vị trí chi tiết.</small>
           </span>
         </summary>
         {showAdvanced && (
@@ -426,14 +426,14 @@ export const ConfigEditor = memo(function ConfigEditor({
               <Input
                 value={query}
                 onChange={(event) => onQueryChange(event.target.value)}
-                placeholder="Search detailed controls…"
-                aria-label="Search detailed controls"
+                placeholder="Tìm kiếm cài đặt chi tiết…"
+                aria-label="Tìm kiếm cài đặt chi tiết"
               />
             </div>
             {visibleGroups.length === 0 ? (
-              <p className="config-empty">No advanced settings match "{query}".</p>
+              <p className="config-empty">Không có cài đặt nâng cao nào khớp với "{query}".</p>
             ) : (
-              <div className="config-sections" aria-label="Advanced settings categories">
+              <div className="config-sections" aria-label="Danh mục cài đặt nâng cao">
                 {visibleGroups.map((group) => (
                   <AdvancedGroup
                     key={group.id}

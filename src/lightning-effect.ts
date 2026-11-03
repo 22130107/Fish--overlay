@@ -13,6 +13,10 @@ export class LightningEffect {
   private flashAlpha = 0;
   private strikeTimer = 0;
 
+  public triggerBurstFlash(): void {
+    this.flashAlpha = 0.65; // Bright golden-white screen flash
+  }
+
   public updateAndRender(
     ctx: CanvasRenderingContext2D,
     dt: number,

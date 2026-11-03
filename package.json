@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "start": "node live-server/server.mjs",
+    "serve": "node live-server/server.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -65,7 +65,7 @@ export const DEFAULT_WEATHER_PRESET_ID: WeatherPresetId = "sunny";
 export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   {
     id: "sunny",
-    label: "Sunny",
+    label: "Nắng ấm",
     tint: [1, 1, 1],
     brightness: 1,
     contrast: 1,
@@ -106,7 +106,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   },
   {
     id: "rain",
-    label: "Rain",
+    label: "Trời mưa",
     tint: [0.67, 0.86, 0.96],
     brightness: 0.72,
     contrast: 0.94,
@@ -148,7 +148,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
 
   {
     id: "deep-clear",
-    label: "Deep clear",
+    label: "Trong xanh",
     tint: [1, 1, 1],
     brightness: 1,
     contrast: 1,
@@ -189,7 +189,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   },
   {
     id: "overcast",
-    label: "Overcast",
+    label: "Trời râm",
     tint: [0.87, 0.96, 1.02],
     brightness: 0.86,
     contrast: 0.9,
@@ -230,7 +230,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   },
   {
     id: "mist",
-    label: "Mist",
+    label: "Sương mù",
     tint: [0.76, 0.9, 0.88],
     brightness: 0.8,
     contrast: 0.86,
@@ -271,7 +271,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   },
   {
     id: "sunset",
-    label: "Sunset",
+    label: "Hoàng hôn",
     tint: [1.08, 0.86, 0.7],
     brightness: 0.93,
     contrast: 1.06,
@@ -312,7 +312,7 @@ export const WEATHER_PRESETS: readonly WeatherPreset[] = [
   },
   {
     id: "moonlight",
-    label: "Moonlight",
+    label: "Ánh trăng",
     tint: [0.5, 0.7, 1.04],
     brightness: 0.6,
     contrast: 1.08,

@@ -125,12 +125,12 @@ export function QuickSettings({
     <div className="settings-quick">
       <section className="settings-quick__section" aria-labelledby="quick-koi-heading">
         <div className="settings-quick__heading">
-          <div className="settings-quick__heading-row"><h3 id="quick-koi-heading">Koi</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["koi", "koi-palettes", "koi-patterns"])}><RotateCcw aria-hidden="true" /> Reset</button></div>
-          <p>Choose how many koi swim in the pond and color each koi family.</p>
+          <div className="settings-quick__heading-row"><h3 id="quick-koi-heading">Cá Koi</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["koi", "koi-palettes", "koi-patterns"])}><RotateCcw aria-hidden="true" /> Đặt lại</button></div>
+          <p>Chọn số lượng cá bơi trong hồ và tùy chỉnh màu sắc cho từng dòng cá.</p>
         </div>
         <SettingSlider
-          label="Koi count"
-          description="Add or remove koi without restarting the pond."
+          label="Số lượng cá Koi"
+          description="Thêm hoặc bớt cá mà không cần khởi động lại mô phỏng."
           value={koiCount}
           min={1}
           max={48}
@@ -138,8 +138,8 @@ export function QuickSettings({
         />
         <div className="quick-setting" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
-            <Label htmlFor="quick-koi-family">Koi family</Label>
-            <small>The colors below change every koi of this pattern.</small>
+            <Label htmlFor="quick-koi-family">Dòng cá Koi</Label>
+            <small>Các màu bên dưới sẽ áp dụng cho tất cả cá thuộc mẫu hoa văn này.</small>
           </div>
           <select
             id="quick-koi-family"
@@ -159,39 +159,39 @@ export function QuickSettings({
           onClick={() => onPreviewFamilyChange(previewFamily === null ? paletteIndex : null)}
         >
           {previewFamily === null
-            ? `Preview ${selectedPalette.name} family in the pond`
-            : `Showing ${selectedPalette.name} family · Show all fish`}
+            ? `Xem trước dòng cá ${selectedPalette.name} trong hồ`
+            : `Đang xem dòng cá ${selectedPalette.name} · Hiện toàn bộ đàn`}
         </button>
         <div className="quick-colors">
-          <QuickColor id="quick-koi-base" label="Body" value={hexFromInt(base)} onChange={(hex) => setBase(Number.parseInt(hex.slice(1), 16))} />
-          <QuickColor id="quick-koi-accent" label="Accent patches" value={hexFromInt(accent)} onChange={(hex) => setAccent(Number.parseInt(hex.slice(1), 16))} />
-          <QuickColor id="quick-koi-marking" label="Dark markings" value={hexFromInt(marking)} onChange={(hex) => setMarking(Number.parseInt(hex.slice(1), 16))} />
-          <QuickColor id="quick-koi-fin" label="Fins" value={hexFromInt(fin)} onChange={(hex) => setFin(Number.parseInt(hex.slice(1), 16))} />
+          <QuickColor id="quick-koi-base" label="Thân cá" value={hexFromInt(base)} onChange={(hex) => setBase(Number.parseInt(hex.slice(1), 16))} />
+          <QuickColor id="quick-koi-accent" label="Màu nổi bật" value={hexFromInt(accent)} onChange={(hex) => setAccent(Number.parseInt(hex.slice(1), 16))} />
+          <QuickColor id="quick-koi-marking" label="Đốm hoa văn" value={hexFromInt(marking)} onChange={(hex) => setMarking(Number.parseInt(hex.slice(1), 16))} />
+          <QuickColor id="quick-koi-fin" label="Vây cá" value={hexFromInt(fin)} onChange={(hex) => setFin(Number.parseInt(hex.slice(1), 16))} />
         </div>
       </section>
 
       <section className="settings-quick__section" aria-labelledby="quick-water-heading">
         <div className="settings-quick__heading">
-          <div className="settings-quick__heading-row"><h3 id="quick-water-heading">Water</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["pond-bed", "water", "ripples"])}><RotateCcw aria-hidden="true" /> Reset</button></div>
-          <p>Change the pond colors and how clearly the koi show through the surface.</p>
+          <div className="settings-quick__heading-row"><h3 id="quick-water-heading">Nước hồ</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["pond-bed", "water", "ripples"])}><RotateCcw aria-hidden="true" /> Đặt lại</button></div>
+          <p>Thay đổi màu nước hồ và độ trong suốt khi nhìn cá qua mặt nước.</p>
         </div>
         <div className="quick-colors">
           <QuickColor
             id="quick-deep-color"
-            label="Deep water"
+            label="Vùng nước sâu"
             value={hexFromRgb(deepColor)}
             onChange={(hex) => setDeepColor(new THREE.Color(hex).toArray().map((c) => Number(c.toFixed(4))) as [number, number, number])}
           />
           <QuickColor
             id="quick-shallow-color"
-            label="Shallow water"
+            label="Vùng nước nông"
             value={hexFromRgb(shallowColor)}
             onChange={(hex) => setShallowColor(new THREE.Color(hex).toArray().map((c) => Number(c.toFixed(4))) as [number, number, number])}
           />
         </div>
         <SettingSlider
-          label="Water clarity"
-          description="Soften surface patterns to make the koi easier to see."
+          label="Độ trong của nước"
+          description="Làm dịu gợn sóng bề mặt để nhìn cá rõ ràng hơn."
           value={clarity}
           min={0}
           max={1}
@@ -202,36 +202,36 @@ export function QuickSettings({
 
       <section className="settings-quick__section" aria-labelledby="quick-plants-heading">
         <div className="settings-quick__heading">
-          <div className="settings-quick__heading-row"><h3 id="quick-plants-heading">Plants &amp; life</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["lotus", "lotus-leaves", "lotus-flowers", "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns"])}><RotateCcw aria-hidden="true" /> Reset</button></div>
-          <p>Fill the edges without changing the koi already swimming.</p>
+          <div className="settings-quick__heading-row"><h3 id="quick-plants-heading">Thực vật &amp; sinh thái</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["lotus", "lotus-leaves", "lotus-flowers", "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns"])}><RotateCcw aria-hidden="true" /> Đặt lại</button></div>
+          <p>Tô điểm mặt hồ bằng cây cỏ mà không ảnh hưởng tới đàn cá.</p>
         </div>
         <SettingSlider
-          label="Lotus leaves"
-          description="Add floating leaves around the pond."
+          label="Lá sen"
+          description="Thêm các lá sen nổi quanh mặt hồ."
           value={visibleLeafCount}
           min={0}
           max={32}
           onChange={setVisibleLeafCount}
         />
         <SettingSlider
-          label="Lotus flowers"
-          description="Place more flowers on the visible leaves."
+          label="Hoa sen"
+          description="Thêm hoa sen nở trên các tán lá."
           value={visibleFlowerCount}
           min={0}
           max={16}
           onChange={setVisibleFlowerCount}
         />
         <SettingSlider
-          label="Duckweed patches"
-          description="Add small clusters of floating greenery."
+          label="Cụm bèo tấm"
+          description="Thêm các khóm bèo tấm xanh trôi nổi."
           value={visiblePatchCount}
           min={0}
           max={16}
           onChange={setVisiblePatchCount}
         />
         <SettingSlider
-          label="Butterflies"
-          description="Change how many butterflies visit the flowers."
+          label="Đàn bướm"
+          description="Thay đổi số lượng bướm dập dờn quanh hoa."
           value={visibleButterflyCount}
           min={0}
           max={12}
@@ -241,13 +241,13 @@ export function QuickSettings({
 
       <section className="settings-quick__section" aria-labelledby="quick-atmosphere-heading">
         <div className="settings-quick__heading">
-          <div className="settings-quick__heading-row"><h3 id="quick-atmosphere-heading">Atmosphere</h3><button type="button" className="settings-section-reset" onClick={onResetAtmosphere}><RotateCcw aria-hidden="true" /> Reset</button></div>
-          <p>Choose the light, ripples, and background river sound.</p>
+          <div className="settings-quick__heading-row"><h3 id="quick-atmosphere-heading">Môi trường &amp; ánh sáng</h3><button type="button" className="settings-section-reset" onClick={onResetAtmosphere}><RotateCcw aria-hidden="true" /> Đặt lại</button></div>
+          <p>Tùy chỉnh ánh sáng thời tiết, gợn sóng và âm thanh tiếng suối.</p>
         </div>
         <div className="quick-setting" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
-            <Label htmlFor="quick-weather">Weather</Label>
-            <small>A preset changes its own pond colors and lighting.</small>
+            <Label htmlFor="quick-weather">Thời tiết</Label>
+            <small>Mỗi chế độ mang bảng màu nước và ánh sáng đặc trưng.</small>
           </div>
           <select
             id="quick-weather"
@@ -262,15 +262,15 @@ export function QuickSettings({
         </div>
         <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
-            <Label htmlFor="quick-rain">Rain ripples</Label>
-            <small>Show raindrops spreading across the surface.</small>
+            <Label htmlFor="quick-rain">Gợn mưa rơi</Label>
+            <small>Hiển thị các vòng sóng mưa rơi lăn tăn trên mặt nước.</small>
           </div>
           <Switch id="quick-rain" checked={rainEnabled} onCheckedChange={onRainChange} />
         </div>
         <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
-            <Label htmlFor="quick-sound">River sound</Label>
-            <small>Play the gentle background recording. Off by default.</small>
+            <Label htmlFor="quick-sound">Tiếng suối chảy</Label>
+            <small>Phát âm thanh suối nước êm dịu làm nền (mặc định tắt).</small>
           </div>
           <Switch id="quick-sound" checked={soundEnabled} onCheckedChange={onSoundChange} />
         </div>

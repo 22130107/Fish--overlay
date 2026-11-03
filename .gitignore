@@ -17,3 +17,8 @@ pnpm-lock.yaml
 yarn.lock
 
 .claude
+
+# Live server runtime state
+live-server/last_channel.json
+live-server/tts/*
+!live-server/tts/.gitkeep

@@ -38,6 +38,9 @@ export const SIMULATION = {
   spineNodes: 14,
 } as const;
 
+/** Time in seconds before an unfed viewer fish starves and gets hooked (240s = 4 minutes) */
+export const FISH_MAX_HUNGER_TIME = 240;
+
 const live = settings.live;
 
 // `maximumCount`/`maximumInstances` are fixed engine limits, not user
