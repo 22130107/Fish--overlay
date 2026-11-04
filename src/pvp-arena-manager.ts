@@ -226,7 +226,21 @@ export class PvpArenaManager {
           });
         }
 
-        if (loserIdx >= 0) {
+        const loserFish = loserIdx >= 0 ? school.fish[loserIdx] : null;
+        if (loserFish?.hasPvPShield) {
+          loserFish.hasPvPShield = false;
+          loserFish.speed = loserFish.maximumSpeed * 1.5;
+          loserFish.nameVisibleTimer = 5.0;
+          const loserName =
+            loserId === this.state.fighter1?.id
+              ? this.state.fighter1?.name
+              : this.state.fighter2?.name || "";
+          this.onEvent?.({
+            type: "eat",
+            text: `🛡️ ${loserName} đã kích hoạt Linh Khiên Kim Cương thoát chết trong gang tấc!`,
+            user: loserName,
+          });
+        } else if (loserIdx >= 0) {
           school.removeFish(loserIdx);
         }
 

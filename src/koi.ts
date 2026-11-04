@@ -64,8 +64,13 @@ export class Koi {
   public passedTribulation82 = false;
   public tribulationAura: "dragon" | "smoke" | null = null;
   public smokeTimer = 0;
+  public isNeonGlow = false;
+  public hasPvPShield = false;
+  public isMiniFish = false;
+  public miniTimer = 0;
 
   public get sizeCm(): number {
+    if (this.isMiniFish) return 10.0;
     return Math.min(85.0, Math.round((20.0 + this.eatCount * 0.5) * 10) / 10);
   }
 
@@ -169,6 +174,10 @@ export class Koi {
     this.passedTribulation82 = false;
     this.tribulationAura = null;
     this.smokeTimer = 0;
+    this.isNeonGlow = false;
+    this.hasPvPShield = false;
+    this.isMiniFish = false;
+    this.miniTimer = 0;
     this.angularVelocity = 0;
     this.velocity = mul(fromAngle(this.heading), this.speed);
 
