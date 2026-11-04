@@ -302,6 +302,20 @@ export class LiveClient {
     }, 3000);
   }
 
+  private refreshFishNameTimer(id?: string, name?: string): void {
+    if (!id && !name) return;
+    const fish = this.school.fish
+      .slice(0, this.school.count)
+      .find(
+        (f) =>
+          (id && f.ownerId === id) ||
+          (name && f.ownerName && f.ownerName.toLowerCase() === name.toLowerCase())
+      );
+    if (fish) {
+      fish.nameVisibleTimer = 5.0;
+    }
+  }
+
   private handleMessage(msg: any): void {
     switch (msg.t) {
       case "state":
@@ -359,6 +373,7 @@ export class LiveClient {
           fish.state = 3;
         }
         this.pushEventAlert(`🚀 ${name} vừa chia sẻ phiên Live!`, "info");
+        this.refreshFishNameTimer(id, name);
         // Drop bonus 5 pellets to celebrate share!
         for (let i = 0; i < 5; i++) {
           const rx = 40 + Math.random() * (CANVAS_WIDTH - 80);
@@ -384,6 +399,7 @@ export class LiveClient {
           fish.hungerTimeLeft = fish.maxHungerTime;
         }
         this.pushEventAlert(`❤️ ${name} vừa theo dõi kênh!`, "info");
+        this.refreshFishNameTimer(id, name);
         break;
       }
 
@@ -426,6 +442,7 @@ export class LiveClient {
           );
           this.foodSystem.spawn(point, name, avatar);
           this.school.callTo(point);
+          this.refreshFishNameTimer(id, name);
         }
         break;
       }
@@ -459,6 +476,7 @@ export class LiveClient {
           fish.hungerTimeLeft = fish.maxHungerTime;
           fish.state = 3; // burst of excitement
         }
+        this.refreshFishNameTimer(id, name);
         break;
       }
 
@@ -468,6 +486,7 @@ export class LiveClient {
           msg.y ? (msg.y / 270) * CANVAS_HEIGHT : CANVAS_HEIGHT * 0.5,
         );
         this.school.ripples.trigger("touch", point);
+        this.refreshFishNameTimer(msg.id || msg.user, msg.user);
         break;
       }
 
@@ -497,6 +516,7 @@ export class LiveClient {
           donorFish.hunger = 100;
           donorFish.hungerTimeLeft = donorFish.maxHungerTime;
         }
+        this.refreshFishNameTimer(msg.id || msg.user, msg.user);
 
         // Update donors
         if (msg.topDonors) {
