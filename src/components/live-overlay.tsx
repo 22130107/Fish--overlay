@@ -486,9 +486,7 @@ export function LiveOverlay({
               <span className="sep">•</span>
               <span>💬 <b>Gõ "size": Soi cảnh giới</b></span>
               <span className="sep">•</span>
-              <span>🥖 <b>Bình luận: Cho ăn</b></span>
-              <span className="sep">•</span>
-              <span>👋 <b>Vào xem: Nhận cá</b></span>
+              <span>💬 <b>Bình luận: Nhận cá & Cho ăn</b></span>
               <span className="sep">•</span>
               <span>⚠️ <b>Đói lâu bị câu mất!</b></span>
             </div>
@@ -502,9 +500,7 @@ export function LiveOverlay({
               <span className="sep">•</span>
               <span>💬 <b>Gõ "size": Soi cảnh giới</b></span>
               <span className="sep">•</span>
-              <span>🥖 <b>Bình luận: Cho ăn</b></span>
-              <span className="sep">•</span>
-              <span>👋 <b>Vào xem: Nhận cá</b></span>
+              <span>💬 <b>Bình luận: Nhận cá & Cho ăn</b></span>
               <span className="sep">•</span>
               <span>⚠️ <b>Đói lâu bị câu mất!</b></span>
             </div>
