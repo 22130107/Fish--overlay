@@ -1,7 +1,7 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "./config";
-import { vec, type Vec2 } from "./math";
+import { vec } from "./math";
 import type { School } from "./school";
-import type { PvpArenaState, PvpFighter } from "./pvp-arena-types";
+import type { PvpArenaState } from "./pvp-arena-types";
 
 export class PvpArenaManager {
   public readonly state: PvpArenaState = {

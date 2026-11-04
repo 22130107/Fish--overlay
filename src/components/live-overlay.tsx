@@ -165,6 +165,7 @@ export function LiveOverlay({
   if (!showOverlay) return null;
 
   // Active owned fish
+  const arena = school.arena;
   const ownedFish = school.fish.slice(0, school.count).filter((f) => Boolean(f.ownerId));
 
   return (
@@ -172,6 +173,66 @@ export function LiveOverlay({
       {/* 0. Thiên Kiếp & Lôi Đình Banner */}
       {liveState.tribulation && liveState.tribulation.active && (
         <TribulationBanner tribulation={liveState.tribulation} />
+      )}
+
+      {/* 0.1 PVP Arena HUD & Waiting Banner */}
+      {arena && (arena.state.phase === "summon" || arena.state.phase === "fighting" || arena.state.phase === "knockout") && arena.state.fighter1 && arena.state.fighter2 && (
+        <div className="pvp-battle-hud">
+          <div className="pvp-hud-header">⚔️ VÕ ĐÀI THẦN NGƯ: QUYẾT ĐẤU SINH TỬ ⚔️</div>
+          <div className="pvp-hud-body">
+            <div className="pvp-fighter left">
+              {arena.state.fighter1.avatar ? (
+                <img src={arena.state.fighter1.avatar} className="pvp-avatar" alt="" />
+              ) : (
+                <div className="pvp-avatar-fallback">{arena.state.fighter1.name[0]}</div>
+              )}
+              <div className="pvp-info">
+                <span className="pvp-name">{arena.state.fighter1.name}</span>
+                <span className="pvp-power">Lực húc: {arena.state.fighter1.score}</span>
+              </div>
+            </div>
+
+            <div className="pvp-meter-container">
+              <div className="pvp-meter-timer">{arena.state.phase === "summon" ? `CHUẨN BỊ: ${Math.ceil(arena.state.timer)}s` : `CHIẾN: ${Math.ceil(arena.state.timer)}s`}</div>
+              <div className="pvp-meter-track">
+                <div
+                  className="pvp-meter-fill"
+                  style={{
+                    width: `${Math.max(10, Math.min(90, 50 + (arena.state.fighter1.score - arena.state.fighter2.score) * 2))}%`,
+                  }}
+                />
+              </div>
+              <div className="pvp-meter-hint">Bình luận "huc" / "day" để tiếp sức!</div>
+            </div>
+
+            <div className="pvp-fighter right">
+              <div className="pvp-info right">
+                <span className="pvp-name">{arena.state.fighter2.name}</span>
+                <span className="pvp-power">Lực húc: {arena.state.fighter2.score}</span>
+              </div>
+              {arena.state.fighter2.avatar ? (
+                <img src={arena.state.fighter2.avatar} className="pvp-avatar" alt="" />
+              ) : (
+                <div className="pvp-avatar-fallback">{arena.state.fighter2.name[0]}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {arena && arena.state.phase === "idle" && arena.state.waitingChallenger && (
+        <div className="pvp-waiting-banner">
+          🥋 <b>{arena.state.waitingChallenger.name}</b> đang đứng trên lôi đài! Bình luận <b>"pvp"</b> để khiêu chiến!
+        </div>
+      )}
+
+      {/* PVP Arena Center Ring */}
+      {arena && arena.isActive && (
+        <div className="pvp-arena-layer">
+          <div className={`pvp-arena-ring phase-${arena.state.phase}`}>
+            <div className="pvp-ring-title">⚔️ VÕ ĐÀI ⚔️</div>
+          </div>
+        </div>
       )}
 
       {/* 1. Fish Head Nametags, Avatars & Hunger Bars */}
@@ -202,6 +263,9 @@ export function LiveOverlay({
                   fish.nameVisibleTimer <= 0 ? "avatar-only" : ""
                 }`}
               >
+                {fish.isKing && (
+                  <span className="fish-crown-badge">👑</span>
+                )}
                 {fish.ownerAvatar ? (
                   <img
                     src={fish.ownerAvatar}
@@ -369,7 +433,8 @@ export function LiveOverlay({
       {/* 6. Guidance Bar (status pill hidden per streamer request) */}
       <div className="live-bottom-dock">
         <div className="live-instruction-pill">
-          👋 <b>Vào xem: Nhận 1 Linh Ngư</b> • 💬 <b>Gõ "size": Soi Cảnh Giới Tu Tiên</b> • 🥖 <b>Bình luận: Ban linh đan</b> • ⚠️ <b>Đói lâu bị câu mất!</b>
+          {arena && arena.state.kingName && (<span className="king-title-pill">👑 <b>Vua Hồ Cá: {arena.state.kingName}</b> • </span>)}
+          ⚔️ <b>Gõ "pvp": Lên đài</b> • 👋 <b>Vào xem: Nhận 1 Linh Ngư</b> • 💬 <b>Gõ "size": Soi Cảnh Giới Tu Tiên</b> • 🥖 <b>Bình luận: Ban linh đan</b> • ⚠️ <b>Đói lâu bị câu mất!</b>
         </div>
       </div>
     </div>

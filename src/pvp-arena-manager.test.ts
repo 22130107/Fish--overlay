@@ -67,8 +67,8 @@ describe("PvpArenaManager", () => {
   it("handles knockout and crowns the winner", () => {
     const arena = new PvpArenaManager();
     const school = new School();
-    const fish1 = school.spawnFishForViewer("user1", "Alice", "alice.png");
-    const fish2 = school.spawnFishForViewer("user2", "Bob", "bob.png");
+    school.spawnFishForViewer("user1", "Alice", "alice.png");
+    school.spawnFishForViewer("user2", "Bob", "bob.png");
 
     arena.registerChallenger("user1", "Alice", "alice.png");
     arena.registerChallenger("user2", "Bob", "bob.png");
@@ -89,7 +89,8 @@ describe("PvpArenaManager", () => {
     expect(arena.state.phase).toBe("idle");
     expect(arena.state.kingId).toBe("user1");
     expect(arena.state.kingName).toBe("Alice");
-    expect((fish1 as any).isKing).toBe(true);
+    const aliceFish = school.fish.slice(0, school.count).find((f) => f.ownerId === "user1");
+    expect(aliceFish?.isKing).toBe(true);
     // Bob's fish should be removed or no longer owned by user2
     const bobFish = school.fish.slice(0, school.count).find((f) => f.ownerId === "user2");
     expect(bobFish).toBeUndefined();
@@ -100,8 +101,8 @@ describe("PvpArenaManager", () => {
     const school = new School();
     school.arena = arena;
 
-    const fish1 = school.spawnFishForViewer("user1", "Alice", "alice.png");
-    const fish2 = school.spawnFishForViewer("user2", "Bob", "bob.png");
+    school.spawnFishForViewer("user1", "Alice", "alice.png");
+    school.spawnFishForViewer("user2", "Bob", "bob.png");
     const spectator = school.spawnFishForViewer("user3", "Charlie", "charlie.png");
 
     arena.registerChallenger("user1", "Alice", "alice.png");
