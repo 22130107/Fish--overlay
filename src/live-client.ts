@@ -174,7 +174,7 @@ export class LiveClient {
           fish.eatCount = Math.max(fish.eatCount, 130);
           const dragonGrowth = 1 + Math.min(1.2, fish.eatCount * 0.015);
           fish.bodyLength = 34 * dragonGrowth;
-          fish.bodyWidth = fish.bodyLength * 0.22;
+          fish.bodyWidth = fish.bodyLength * 0.32;
           (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
           this.school.ripples.trigger("touch", fish.position);
           const t1 = setTimeout(() => this.school.ripples.trigger("touch", fish.position), 150);
@@ -625,7 +625,7 @@ export class LiveClient {
           dragonFish.hungerTimeLeft = dragonFish.maxHungerTime;
           const dragonGrowth = 1 + Math.min(1.2, dragonFish.eatCount * 0.015);
           dragonFish.bodyLength = 34 * dragonGrowth;
-          dragonFish.bodyWidth = dragonFish.bodyLength * 0.22;
+          dragonFish.bodyWidth = dragonFish.bodyLength * 0.32;
           (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
           this.school.ripples.trigger("touch", dragonFish.position);
           const t1 = setTimeout(() => this.school.ripples.trigger("touch", dragonFish.position), 150);

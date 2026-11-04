@@ -12,6 +12,7 @@ import { DuckweedPass } from "./duckweed";
 import {
   createFishAppearance,
   patchesFor,
+  KoiPattern,
   type FishAppearance,
 } from "./fish-appearance";
 import { Koi, SwimState } from "./koi";
@@ -273,6 +274,14 @@ export class FishRenderer {
     eyeRed: new THREE.Color(),
     eyePupil: new THREE.Color(),
     clawIvory: new THREE.Color(),
+  };
+  private readonly goldenFatFishAppearance: FishAppearance = {
+    pattern: KoiPattern.Ogon,
+    base: new THREE.Color("#fbbf24"),      // Vàng kim rực rỡ
+    accent: new THREE.Color("#f59e0b"),    // Vàng cam ấm
+    marking: new THREE.Color("#d97706"),   // Viền vàng hổ phách
+    fin: new THREE.Color("#fef08a"),       // Vây vàng nhạt phát quang
+    eye: new THREE.Color("#3b1a03"),       // Mắt đen hổ phách
   };
   private previousAppearanceTime = -1;
   private currentVisualDepth = 0;
@@ -570,7 +579,9 @@ export class FishRenderer {
       const fish = school.fish[index];
       this.buildRenderSpine(fish);
       const appearanceIndex = previewIndex ?? index;
-      const sourceAppearance = (previewIndex === null && fish.customAppearance)
+      const sourceAppearance = (previewIndex === null && fish.isDragon)
+        ? this.goldenFatFishAppearance
+        : (previewIndex === null && fish.customAppearance)
         ? fish.customAppearance
         : this.appearances[appearanceIndex];
       const targetAppearance = this.depthAppearances[appearanceIndex];
@@ -833,6 +844,16 @@ export class FishRenderer {
 
   private widthAt(fish: Koi, node: number): number {
     const t = node / (SPINE_NODES - 1);
+    if (fish.isDragon) {
+      // Dáng cá siêu béo: Thân phình tròn múp míp (chubby pot-belly), đầu to tròn, đuôi dày
+      const profile =
+        t < 0.16
+          ? 0.88 + (t / 0.16) * 0.32
+          : t < 0.70
+            ? 1.25 - Math.pow((t - 0.40) / 0.36, 2) * 0.35
+            : Math.pow(Math.max(0, 1 - (t - 0.70) / 0.30), 0.65) * 0.90;
+      return Math.max(1.0, fish.bodyWidth * profile * 1.55);
+    }
     const profile =
       t < 0.18
         ? 0.73 + (t / 0.18) * 0.27

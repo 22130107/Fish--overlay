@@ -169,12 +169,12 @@ export function calculateTuTienRank(sizeCm: number): TuTienRank {
     realm: "Phi Thăng Kỳ",
     subStage: "Chân Long Thần Cấp",
     fullName: "Phi Thăng Hóa Long",
-    title: "Thái Cổ Chân Long",
-    badge: "🐉👑",
+    title: "Kim Ngư Siêu Béo",
+    badge: "🐟👑",
     auraColor: "#fbbf24",
     progressToNext: 100,
     nextRealm: "Đắc Đạo Thần Thoại",
-    desc: "Cá chép vượt long môn, đắc đạo thành Chân Long phi thăng tiên giới",
+    desc: "Cá chép vượt long môn, đắc đạo thành Kim Ngư siêu béo phi thăng tiên giới",
   };
 }
 
