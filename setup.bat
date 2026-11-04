@@ -12,30 +12,31 @@ echo.
 :: 1. Kiem tra Node.js
 echo [1/4] Kiem tra moi truong Node.js...
 where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [-] May tinh chua co Node.js! Dang tien hanh tu dong cai dat qua winget...
-    where winget >nul 2>nul
-    if %errorlevel% equ 0 (
-        echo Dang tai va cai dat Node.js LTS, vui long doi...
-        winget install OpenJS.NodeJS.LTS -e --accept-package-agreements --accept-source-agreements
-        echo.
-        echo ========================================================
-        echo [!] Da cai xong Node.js! 
-        echo De he thong nhan dien moi truong moi, vui long dong cua so nay 
-        echo va chay lai file setup.bat nay 1 lan nua!
-        echo ========================================================
-        pause
-        exit /b
-    ) else (
-        echo [!] May tinh khong co cong cu winget.
-        echo Vui long truy cap https://nodejs.org/ de tai va cai dat Node.js ban LTS.
-        pause
-        exit /b
-    )
-) else (
-    for /f "tokens=*" %%i in ('node -v') do set NODE_VER=%%i
-    echo [+] Da tim thay Node.js: %NODE_VER%
-)
+if %errorlevel% equ 0 goto node_ok
+
+echo [-] May tinh chua co Node.js! Dang tien hanh tu dong cai dat qua winget...
+where winget >nul 2>nul
+if %errorlevel% neq 0 goto no_winget
+
+echo Dang tai va cai dat Node.js LTS, vui long doi...
+winget install OpenJS.NodeJS.LTS -e --accept-package-agreements --accept-source-agreements
+echo.
+echo ========================================================
+echo [!] Da cai dat xong Node.js!
+echo Vui long dong cua so nay va mo lai setup.bat 1 lan nua.
+echo ========================================================
+pause
+exit /b
+
+:no_winget
+echo [!] May tinh khong co cong cu winget.
+echo Vui long truy cap https://nodejs.org/ de tai va cai dat Node.js LTS.
+pause
+exit /b
+
+:node_ok
+for /f "tokens=*" %%i in ('node -v') do set NODE_VER=%%i
+echo [+] Da tim thay Node.js: %NODE_VER%
 
 echo.
 :: 2. Cai dat thu vien goc
@@ -74,10 +75,8 @@ echo ========================================================
 echo          CAI DAT HOAN TAT THANH CONG 100%!
 echo ========================================================
 echo.
-echo Tu bay gio ban chi can nhap dup chuot vao file "run-live.bat" de chay live!
+echo Tu bay gio ban chi can nhap dup chuot vao file run-live.bat de chay live!
 echo.
 set /p START_NOW="Ban co muon khoi chay server luon bay gio khong? (Y/N): "
-if /i "%START_NOW%"=="Y" (
-    start run-live.bat
-)
+if /i "%START_NOW%"=="Y" start run-live.bat
 pause
