@@ -106,6 +106,17 @@ const WEATHER_KEYWORDS = [
 
 const SCATTER_KEYWORDS = ['chạy', 'chay', 'bien', 'biến', 'tản', 'tan', 'scatter', 'bão', 'scare'];
 
+const userLastThunder = new Map(); // id -> timestamp
+
+export function isDragonFish(f) {
+  return Boolean(f && (Number(f.sizeCm) >= 82.0 || f.passed82));
+}
+
+const THIEN_LOI_KEYWORDS = [
+  'thiên lôi', 'thien loi', 'sấm sét', 'sam set', 'gọi sét', 'goi set',
+  'lôi phạt', 'loi phat', 'sét đánh', 'set danh', 'sét', 'lôi giáng'
+];
+
 const seenUsers = new Set();
 const userChatHistory = new Map(); // id -> { lastText, lastChatTime, lastSizeTime }
 
@@ -277,16 +288,60 @@ function handleChat(id, name, text, avatar) {
     addTribulationPower('chat', name, 1, avatar);
   }
 
-  // Check weather command
+  // Check weather command - ĐẶC QUYỀN HÓA LONG (>= 82cm)
   if (settings.rainKeyword) {
     for (const item of WEATHER_KEYWORDS) {
       if (item.words.some((w) => lower.includes(w))) {
         if (currentTribulation) { return; } // Weather locked during tribulation
-        addLog(`🌤️ ${name} đổi thời tiết: ${item.preset}`);
+        
+        if (!isDragonFish(fish)) {
+          addLog(`⚠️ ${name} chưa đạt cảnh giới Hóa Long (${fish.sizeCm}cm < 82cm), chưa thể đổi thời tiết.`);
+          return;
+        }
+
+        const weatherNames = {
+          'rain': 'Mưa Rơi',
+          'sunny': 'Nắng Ấm',
+          'sunset': 'Hoàng Hôn',
+          'moonlight': 'Ánh Trăng',
+          'mist': 'Sương Mù',
+          'deep-clear': 'Trong Xanh'
+        };
+        const weatherLabel = weatherNames[item.preset] || item.preset;
+        addLog(`🌤️ 🐉 Thái Cổ Chân Long ${name} đổi thời tiết: ${item.preset}`);
         broadcast({ t: 'weather', preset: item.preset, user: name });
+        const spokenName = cleanSpokenName(name);
+        say(`Thái Cổ Chân Long của đạo hữu ${spokenName} hô mưa gọi gió, biến hóa càn khôn sang tiết trời ${weatherLabel}!`, { tag: 'weather' });
         return;
       }
     }
+  }
+
+  // Check Thiên Lôi command - ĐẶC QUYỀN HÓA LONG (>= 82cm)
+  if (THIEN_LOI_KEYWORDS.some((kw) => lower.includes(kw))) {
+    if (currentTribulation) { return; }
+
+    if (!isDragonFish(fish)) {
+      addLog(`⚠️ ${name} chưa đạt cảnh giới Hóa Long (${fish.sizeCm}cm < 82cm), chưa thể hiệu triệu Thiên Lôi.`);
+      return;
+    }
+
+    const now = Date.now();
+    const lastTime = userLastThunder.get(id) || 0;
+    if (now - lastTime < 15000) {
+      const waitSec = Math.ceil((15000 - (now - lastTime)) / 1000);
+      addLog(`⏳ ${name} gọi Thiên Lôi quá nhanh, cần hồi khí ${waitSec}s.`);
+      return;
+    }
+    userLastThunder.set(id, now);
+
+    addLog(`⚡ 🐉 Thái Cổ Chân Long ${name} triệu hoán Thiên Lôi giáng lâm!`);
+    broadcast({ t: 'dragon_lightning', user: name, id: fish.id });
+    broadcast({ t: 'scatter', user: name });
+
+    const spokenName = cleanSpokenName(name);
+    say(`Thái Cổ Chân Long của đạo hữu ${spokenName} hiệu triệu Thiên Lôi giáng thế, uy chấn bát hoang!`, { tag: 'lightning', priority: true });
+    return;
   }
 
   // Check scatter command
@@ -1234,6 +1289,16 @@ wss.on('connection', (ws, req) => {
         case 'scatter':
           broadcast({ t: 'scatter', user: 'Streamer' });
           break;
+        case 'dragon_lightning': {
+          const userName = msg.user || 'Thái Cổ Chân Long';
+          const fishId = msg.id || 'test_dragon_1';
+          addLog(`⚡ 🐉 [Control Test] Triệu hoán Thiên Lôi: ${userName}`);
+          broadcast({ t: 'dragon_lightning', user: userName, id: fishId });
+          broadcast({ t: 'scatter', user: userName });
+          const spoken = cleanSpokenName(userName);
+          say(`Thái Cổ Chân Long của đạo hữu ${spoken} hiệu triệu Thiên Lôi giáng thế, uy chấn bát hoang!`, { tag: 'lightning', priority: true });
+          break;
+        }
         case 'bots':
           toggleBots(Boolean(msg.enabled));
           break;

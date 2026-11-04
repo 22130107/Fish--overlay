@@ -173,7 +173,9 @@
           <button class="secondary" onclick="testWeather('sunset')">🌇 Hoàng hôn</button>
           <button class="secondary" onclick="testWeather('moonlight')">🌙 Ánh trăng</button>
           <button class="danger" onclick="testScatter()">⚡ Giật mình (Scatter)</button>
+          <button class="gold" onclick="testDragonLightning()">⚡ Gọi Thiên Lôi (Chân Long)</button>
         </div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">* Khi gõ từ chat: Chỉ cá đạt cảnh giới Hóa Long (>= 82cm) mới có thể đổi thời tiết và gọi Thiên Lôi.</div>
         <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
           <button id="ttsChatBtn" class="secondary" onclick="toggleChatTTS()">🔊 Giọng đọc bình luận: BẬT</button>
           <button id="ttsJoinBtn" class="secondary" onclick="toggleJoinTTS()">🔊 Giọng đọc vào xem: BẬT</button>
@@ -470,6 +472,10 @@
 
     function testScatter() {
       ws.send(JSON.stringify({ cmd: 'scatter' }));
+    }
+
+    function testDragonLightning() {
+      ws.send(JSON.stringify({ cmd: 'dragon_lightning', user: 'Thái Cổ Chân Long' }));
     }
 
     function toggleBots() {
