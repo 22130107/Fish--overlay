@@ -226,11 +226,47 @@ export function LiveOverlay({
         </div>
       )}
 
-      {/* PVP Arena Center Ring */}
+            {/* PVP Arena Center Ring */}
       {arena && arena.isActive && (
         <div className="pvp-arena-layer">
           <div className={`pvp-arena-ring phase-${arena.state.phase}`}>
             <div className="pvp-ring-title">⚔️ VÕ ĐÀI ⚔️</div>
+          </div>
+        </div>
+      )}
+
+      {/* 0.2 Treasure Chest & God Rays */}
+      {school.treasureSystem?.activeChest && (
+        <div
+          className="treasure-chest-root"
+          style={{
+            left: `${(school.treasureSystem.activeChest.position.x / CANVAS_WIDTH) * 100}%`,
+            top: `${(school.treasureSystem.activeChest.position.y / CANVAS_HEIGHT) * 100}%`,
+          }}
+        >
+          <div className="treasure-god-rays" />
+          <div className={`treasure-chest-box ${school.treasureSystem.activeChest.phase}`}>
+            <span className="treasure-chest-icon">
+              {school.treasureSystem.activeChest.phase === "opened" ? "✨" : "🎁"}
+            </span>
+            {school.treasureSystem.activeChest.phase === "active" && (
+              <div className="treasure-timer-badge">
+                {Math.ceil(school.treasureSystem.activeChest.timer)}s
+              </div>
+            )}
+            {school.treasureSystem.activeChest.claimedBy && (
+              <div className="treasure-reward-banner">
+                <div className="reward-winner">
+                  {school.treasureSystem.activeChest.claimedBy.name}
+                </div>
+                <div className="reward-title">
+                  {school.treasureSystem.activeChest.claimedBy.reward.title}
+                </div>
+                <div className="reward-desc">
+                  {school.treasureSystem.activeChest.claimedBy.reward.description}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -261,10 +297,16 @@ export function LiveOverlay({
               <div
                 className={`fish-owner-pill ${isDanger ? "pill-danger" : ""} ${
                   fish.nameVisibleTimer <= 0 ? "avatar-only" : ""
-                }`}
+                } ${fish.isNeonGlow ? "neon-glow-aura" : ""}`}
               >
                 {fish.isKing && (
                   <span className="fish-crown-badge">👑</span>
+                )}
+                {fish.hasPvPShield && (
+                  <span className="fish-pvp-shield" title="Linh Khiên Kim Cương">🛡️</span>
+                )}
+                {fish.isMiniFish && (
+                  <span className="mini-fish-badge" title="Cá Tí Hon">🫧</span>
                 )}
                 {fish.ownerAvatar ? (
                   <img

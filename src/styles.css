@@ -2448,3 +2448,166 @@ input[type="color"] {
 .king-title-pill {
   color: #fbbf24;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Mystery Treasure Chest & Gacha Reward Styles                                */
+/* -------------------------------------------------------------------------- */
+
+.treasure-chest-root {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 38;
+}
+
+.treasure-god-rays {
+  position: absolute;
+  bottom: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 220px;
+  background: radial-gradient(ellipse at bottom, rgba(251, 191, 36, 0.45), rgba(245, 158, 11, 0.15) 55%, transparent 80%);
+  clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+  animation: god-rays-pulse 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.treasure-chest-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.85));
+  animation: chest-bob 1.8s ease-in-out infinite alternate;
+}
+
+.treasure-chest-icon {
+  font-size: 34px;
+  line-height: 1;
+  text-shadow: 0 0 14px #fbbf24;
+}
+
+.treasure-timer-badge {
+  position: absolute;
+  top: -12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #fbbf24;
+  color: #fef08a;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.treasure-reward-banner {
+  position: absolute;
+  bottom: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 4px 10px;
+  text-align: center;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.55);
+  z-index: 50;
+  white-space: nowrap;
+  animation: reward-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.reward-winner {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.reward-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde047;
+}
+
+.reward-desc {
+  font-size: 9px;
+  color: #cbd5e1;
+}
+
+.fish-pvp-shield {
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px #38bdf8);
+  animation: shield-glow 1.5s ease-in-out infinite alternate;
+  margin-right: 2px;
+}
+
+.mini-fish-badge {
+  font-size: 10px;
+  line-height: 1;
+  filter: drop-shadow(0 0 5px #a78bfa);
+  margin-right: 2px;
+}
+
+.neon-glow-aura {
+  animation: rainbow-neon-pulse 2.5s linear infinite !important;
+  border-color: #f43f5e !important;
+}
+
+@keyframes god-rays-pulse {
+  0% {
+    opacity: 0.5;
+    transform: translateX(-50%) scaleX(0.85);
+  }
+  100% {
+    opacity: 0.95;
+    transform: translateX(-50%) scaleX(1.15);
+  }
+}
+
+@keyframes chest-bob {
+  0% {
+    transform: translateY(-4px) scale(0.98);
+  }
+  100% {
+    transform: translateY(4px) scale(1.02);
+  }
+}
+
+@keyframes reward-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes shield-glow {
+  0% {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 3px #38bdf8);
+  }
+  100% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px #67e8f9);
+  }
+}
+
+@keyframes rainbow-neon-pulse {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 0, 128, 0.8), 0 0 18px rgba(59, 130, 246, 0.6);
+  }
+  33% {
+    box-shadow: 0 0 10px rgba(0, 255, 200, 0.8), 0 0 18px rgba(255, 230, 0, 0.6);
+  }
+  66% {
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 18px rgba(236, 72, 153, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(255, 0, 128, 0.8), 0 0 18px rgba(59, 130, 246, 0.6);
+  }
+}
