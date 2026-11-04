@@ -403,6 +403,7 @@ function handleChat(id, name, text, avatar) {
 
   // Speak chat comment with AI voice (Lọc bỏ spam)!
   if (settings.readChat) {
+    if (/^(pvp|!pvp|huc|day|push|1)$/i.test(text.trim())) return;
     const spamCheck = isCommentSpam(id, text, false);
     if (!spamCheck.spam) {
       const spokenName = String(name).replace(/[_@.]+/g, ' ').replace(/[^\p{L}\p{N}\s]/gu, '').trim() || 'Khán giả';

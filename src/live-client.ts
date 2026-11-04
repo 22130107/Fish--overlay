@@ -68,6 +68,16 @@ export class LiveClient {
   private alertSeq = 1;
   private transformationTimers: any[] = [];
 
+  public send(data: any): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        this.ws.send(typeof data === "string" ? data : JSON.stringify(data));
+      } catch (err) {
+        console.warn("Failed to send WS message:", err);
+      }
+    }
+  }
+
   public constructor(
     private readonly school: School,
     private readonly foodSystem: FoodSystem,
@@ -100,7 +110,7 @@ export class LiveClient {
         evt.text,
         evt.type === "knockout" || evt.type === "eat" ? "hook" : "info"
       );
-      this.queueTTS({ text: evt.text });
+      this.send({ cmd: "say", text: evt.text });
       this.notify();
     };
     this.school.onViewerSpawned = (name) => {
@@ -750,7 +760,12 @@ export class LiveClient {
           v.name.includes("HoaiMy") ||
           v.name.includes("NamMinh"),
       );
-      if (viVoice) utter.voice = viVoice;
+      if (viVoice) {
+        utter.voice = viVoice;
+      } else {
+        onEnd?.();
+        return;
+      }
       window.speechSynthesis.speak(utter);
     } catch (e) {
       console.warn("SpeechSynthesis fallback error:", e);
