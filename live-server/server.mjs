@@ -181,7 +181,7 @@ function handleJoin(id, name, avatar, shouldSpeak = true) {
     seenUsers.delete(first);
   }
   if (isFirstTime) {
-    addLog(`👋 ${name} đã vào phòng Live! Đã cấp 1 chú cá.`);
+    addLog(`👋 ${name} đã vào phòng Live!`);
   }
 
   // Tự động thả cá vào hồ ngay khi vào xem
@@ -198,7 +198,7 @@ function handleJoin(id, name, avatar, shouldSpeak = true) {
     if (now - lastJoinVoiceTime >= 2500) {
       lastJoinVoiceTime = now;
       const spokenName = cleanSpokenName(name);
-      say(`Chào mừng ${spokenName} đã vào hồ nhận linh ngư!`, { tag: 'join', id, user: name });
+      say(`Chào mừng ${spokenName} đã vào xem live!`, { tag: 'join', id, user: name });
     }
   }
 }
@@ -208,8 +208,6 @@ function handleShare(id, name, avatar) {
   name = name || 'Khán giả';
   addLog(`🚀 ${name} đã chia sẻ phiên Live!`);
 
-  // Nếu người chia sẻ chưa có cá thì tự động cấp cá
-  handleJoin(id, name, avatar, false);
 
   broadcast({
     t: 'share',
@@ -229,7 +227,6 @@ function handleFollow(id, name, avatar) {
   id = id || name || `user_${Date.now()}`;
   name = name || 'Khán giả';
   addLog(`❤️ ${name} đã bấm theo dõi kênh!`);
-  handleJoin(id, name, avatar, false);
 
   broadcast({
     t: 'follow',
