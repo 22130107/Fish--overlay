@@ -93,10 +93,13 @@ export class LiveClient {
          }`)
       : "ws://localhost:3001",
   ) {
-    this.audioEl = new Audio();
+    if (typeof Audio !== "undefined") {
+      this.audioEl = new Audio();
+    }
 
     // Auto-unlock browser audio policy on first user interaction
-    const unlock = () => {
+    if (typeof window !== "undefined") {
+      const unlock = () => {
       if (!this.audioEl) this.audioEl = new Audio();
       this.audioEl.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
       this.audioEl.play().catch(() => {});
@@ -105,6 +108,7 @@ export class LiveClient {
     };
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
+    }
 
         // Wire up school events
     this.school.arena = this.arena;
@@ -269,8 +273,8 @@ export class LiveClient {
     };
     this.notify();
 
-    if (this.alertDismissTimer) window.clearTimeout(this.alertDismissTimer);
-    this.alertDismissTimer = window.setTimeout(() => {
+    if (this.alertDismissTimer) clearTimeout(this.alertDismissTimer);
+    this.alertDismissTimer = setTimeout(() => {
       this.state.latestEvent = null;
       this.notify();
     }, 4000);
@@ -289,6 +293,9 @@ export class LiveClient {
   }
 
   public connect(): void {
+    if (typeof window === "undefined") {
+      return;
+    }
     if (this.ws) {
       try { this.ws.close(); } catch {}
     }
@@ -307,8 +314,8 @@ export class LiveClient {
 
     this.ws.onmessage = (event) => {
       try {
-        const msg = JSON.parse(event.data);
-        this.handleMessage(msg);
+        this.handleWsMessage(event.data);
+
       } catch (err) {
         console.error("LiveClient WS parse error", err);
       }
@@ -328,7 +335,7 @@ export class LiveClient {
 
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return;
-    this.reconnectTimer = window.setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
     }, 3000);
@@ -345,6 +352,15 @@ export class LiveClient {
       );
     if (fish) {
       fish.nameVisibleTimer = 5.0;
+    }
+  }
+
+  public handleWsMessage(raw: string | any): void {
+    try {
+      const msg = typeof raw === "string" ? JSON.parse(raw) : raw;
+      this.handleMessage(msg);
+    } catch (err) {
+      console.error("LiveClient WS parse error", err);
     }
   }
 
@@ -586,8 +602,8 @@ export class LiveClient {
         };
         this.notify();
 
-        if (this.giftDismissTimer) window.clearTimeout(this.giftDismissTimer);
-        this.giftDismissTimer = window.setTimeout(() => {
+        if (this.giftDismissTimer) clearTimeout(this.giftDismissTimer);
+        this.giftDismissTimer = setTimeout(() => {
           this.state.currentGift = null;
           this.notify();
         }, 5000);
@@ -669,6 +685,43 @@ export class LiveClient {
         break;
       }
 
+      case "dragon_lightning": {
+        const id = msg.id || "";
+        const name = msg.user || "Thái Cổ Chân Long";
+        let dragonFish = this.school.fish
+          .slice(0, this.school.count)
+          .find(
+            (f) =>
+              (id && f.ownerId === id) ||
+              (f.ownerName && f.ownerName.toLowerCase() === name.toLowerCase())
+          );
+
+        const targetPos = dragonFish
+          ? dragonFish.position
+          : vec(
+              CANVAS_WIDTH * 0.5 + (Math.random() - 0.5) * 160,
+              CANVAS_HEIGHT * 0.5 + (Math.random() - 0.5) * 160
+            );
+
+        const renderer = (this.school as any).fishRenderer;
+        renderer?.lightning?.triggerBurstFlash?.();
+        renderer?.lightning?.spawnBolt?.(targetPos, 95);
+
+        this.school.ripples.trigger("touch", targetPos);
+        const t1 = setTimeout(() => this.school.ripples.trigger("touch", targetPos), 150);
+        const t2 = setTimeout(() => this.school.ripples.trigger("touch", targetPos), 300);
+        this.transformationTimers.push(t1, t2);
+
+        this.school.scatter();
+
+        this.pushEventAlert(
+          `⚡ THÁI CỔ CHÂN LONG ${name} HIỆU TRIỆU THIÊN LÔI GIÁNG LÂM! ⚡`,
+          "size"
+        );
+        this.notify();
+        break;
+      }
+
       case "instant_dragon": {
         const id = msg.id || "dragon_test_1";
         const name = msg.name || "Thái Cổ Chân Long";
@@ -728,7 +781,7 @@ export class LiveClient {
 
     const onDone = () => {
       this.isAudioPlaying = false;
-      window.setTimeout(() => this.processAudioQueue(), 250);
+      setTimeout(() => this.processAudioQueue(), 250);
     };
 
     if (item.url) {
@@ -818,11 +871,11 @@ export class LiveClient {
   }
 
   public dispose(): void {
-    if (this.reconnectTimer) window.clearTimeout(this.reconnectTimer);
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     for (const t of this.transformationTimers) clearTimeout(t);
     this.transformationTimers = [];
-    if (this.giftDismissTimer) window.clearTimeout(this.giftDismissTimer);
-    if (this.alertDismissTimer) window.clearTimeout(this.alertDismissTimer);
+    if (this.giftDismissTimer) clearTimeout(this.giftDismissTimer);
+    if (this.alertDismissTimer) clearTimeout(this.alertDismissTimer);
     if (this.ws) {
       this.ws.onclose = null;
       try { this.ws.close(); } catch {}
