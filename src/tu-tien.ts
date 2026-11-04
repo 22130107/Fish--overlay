@@ -174,7 +174,7 @@ export function calculateTuTienRank(sizeCm: number): TuTienRank {
     auraColor: "#fbbf24",
     progressToNext: 100,
     nextRealm: "Đắc Đạo Thần Thoại",
-    desc: "Cá chép vượt long môn, đắc đạo thành Chân Long phi thăng tiên giới",
+    desc: "Cá chép vượt long môn, đắc đạo thành Chân Long phi thăng tiên giới, hô mưa gọi gió, chưởng quản thời tiết và thiên lôi.",
   };
 }
 
@@ -188,7 +188,7 @@ export function getTuTienVoiceLine(
   const spokenName = String(name).replace(/[_@.]+/g, " ").slice(0, 25).trim() || "Đạo hữu";
 
   if (sizeCm >= 82) {
-    return `Kính báo thiên hạ! Linh ngư của đạo hữu ${spokenName} đã đạt ${sizeWords} xăng ti mét, đắc đạo cảnh giới Phi Thăng Hóa Long, cá chép vượt Vũ Môn hóa thành Chân Long thượng giới!`;
+    return `Kính báo thiên hạ! Linh ngư của đạo hữu ${spokenName} đã đạt ${sizeWords} xăng ti mét, đắc đạo cảnh giới Phi Thăng Hóa Long, cá chép vượt Vũ Môn hóa thành Chân Long thượng giới, chưởng quản thời tiết và hiệu triệu thiên lôi!`;
   }
   if (sizeCm >= 72) {
     return `Thiên kiếp xuất hiện! Linh ngư của đạo hữu ${spokenName} dài ${sizeWords} xăng ti mét, đạt cảnh giới ${rank.realm} ${rank.subStage}, chuẩn bị vượt lôi kiếp hóa rồng!`;
