@@ -32,13 +32,30 @@ describe("TreasureSystem", () => {
     );
   });
 
-  it("sets fish sizeCm to 10cm when mini reward is applied", () => {
+  it("sets fish sizeCm to 10cm when mini reward is applied and restores when timer expires", () => {
     const school = new School();
     const fish = school.spawnFishForViewer("u1", "Hero", "hero.png");
     expect(fish.sizeCm).toBeGreaterThan(15);
     fish.isMiniFish = true;
-    fish.miniTimer = 20;
+    fish.miniTimer = 2.0;
     expect(fish.sizeCm).toBe(10.0);
+
+    // After 2.5s update, miniTimer reaches 0 and isMiniFish becomes false
+    school.update(2.5, 0);
+    expect(fish.miniTimer).toBe(0);
+    expect(fish.isMiniFish).toBe(false);
+    expect(fish.sizeCm).toBeGreaterThan(15);
+  });
+
+  it("updates treasure system within school update", () => {
+    const school = new School();
+    const sys = new TreasureSystem();
+    school.treasureSystem = sys;
+    sys.spawnChest(vec(300, 300));
+    expect(sys.activeChest?.timer).toBe(45);
+
+    school.update(5.0, 0);
+    expect(sys.activeChest?.timer).toBe(40);
   });
 
   it("protects fish with pvp shield from being removed in arena knockout", () => {

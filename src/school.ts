@@ -27,6 +27,7 @@ import {
 import { RippleSystem } from "./ripple-system";
 import type { TribulationState } from "./tribulation-types";
 import type { PvpArenaManager } from "./pvp-arena-manager";
+import type { TreasureSystem } from "./treasure-system";
 
 export class School {
   public readonly fish: Koi[] = Array.from({ length: MAX_FISH }, () => new Koi());
@@ -35,6 +36,7 @@ export class School {
 
   public tribulation: TribulationState | null = null;
   public arena: PvpArenaManager | null = null;
+  public treasureSystem: TreasureSystem | null = null;
   public count: number;
   public targetActive = false;
   public onFishHooked?: (userName: string) => void;
@@ -234,6 +236,9 @@ export class School {
     if (this.arena) {
       this.arena.update(dt, this);
     }
+    if (this.treasureSystem) {
+      this.treasureSystem.update(dt, this);
+    }
     this.targetAge += dt;
     if (
       this.targetActive &&
@@ -270,8 +275,14 @@ export class School {
       if (fish.sizeAlertTimer > 0) {
         fish.sizeAlertTimer = Math.max(0, fish.sizeAlertTimer - dt);
       }
-      if (fish.nameVisibleTimer > 0) {
+            if (fish.nameVisibleTimer > 0) {
         fish.nameVisibleTimer = Math.max(0, fish.nameVisibleTimer - dt);
+      }
+      if (fish.miniTimer > 0) {
+        fish.miniTimer = Math.max(0, fish.miniTimer - dt);
+        if (fish.miniTimer <= 0) {
+          fish.isMiniFish = false;
+        }
       }
 
       // Hunger & Fishing mechanics for viewer-owned fish
@@ -519,7 +530,17 @@ export class School {
       }
     }
 
-        if (this.arena && this.arena.isActive) {
+        if (this.treasureSystem?.activeChest?.phase === "active" && (!this.arena || !this.arena.isActive)) {
+      const chest = this.treasureSystem.activeChest;
+      const toChest = sub(chest.position, fish.position);
+      const chestDist = length(toChest);
+      if (chestDist > 10) {
+        const pullStrength = fish.state === SwimState.Burst ? 4.5 : 2.5;
+        steering = add(steering, mul(normalize(toChest, forward), pullStrength));
+      }
+    }
+
+    if (this.arena && this.arena.isActive) {
       const arenaState = this.arena.state;
       const isFighter1 = arenaState.fighter1 && fish.ownerId === arenaState.fighter1.id;
       const isFighter2 = arenaState.fighter2 && fish.ownerId === arenaState.fighter2.id;
@@ -555,6 +576,10 @@ export class School {
         return fish.maximumSpeed * 1.35;
       }
       return fish.cruiseSpeed * 1.25;
+    }
+
+    if (this.treasureSystem?.activeChest?.phase === "active" && fish.state === SwimState.Burst) {
+      return fish.maximumSpeed * 1.35;
     }
 
     const chaseDuration = FISH.callResponse.chaseBoostSeconds;
