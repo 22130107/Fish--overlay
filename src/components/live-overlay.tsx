@@ -209,7 +209,9 @@ export function LiveOverlay({
                     {fish.ownerName ? fish.ownerName[0].toUpperCase() : "C"}
                   </div>
                 )}
-                <span className="fish-owner-name">{fish.ownerName}</span>
+                {fish.nameVisibleTimer > 0 && (
+                  <span className="fish-owner-name">{fish.ownerName}</span>
+                )}
                 {fish.isDragon ? (
                   <span
                     className="fish-size-pill dragon-tag"

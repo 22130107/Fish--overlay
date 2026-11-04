@@ -1778,7 +1778,7 @@ input[type="color"] {
   padding: 2px 7px 2px 4px;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, padding 0.25s ease;
 }
 
 .fish-owner-pill.pill-danger {
@@ -1790,6 +1790,17 @@ input[type="color"] {
 @keyframes pulse-danger {
   from { transform: scale(0.95); }
   to { transform: scale(1.08); }
+}
+
+@keyframes fade-in-name {
+  from {
+    opacity: 0;
+    max-width: 0;
+  }
+  to {
+    opacity: 1;
+    max-width: 70px;
+  }
 }
 
 .fish-owner-avatar {
@@ -1817,6 +1828,7 @@ input[type="color"] {
   font-weight: 600;
   color: #f8fafc;
   max-width: 70px;
+  animation: fade-in-name 0.25s ease-out;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
