@@ -472,11 +472,43 @@ export function LiveOverlay({
         </div>
       )}
 
-      {/* 6. Guidance Bar (status pill hidden per streamer request) */}
-      <div className="live-bottom-dock">
-        <div className="live-instruction-pill">
-          {arena && arena.state.kingName && (<span className="king-title-pill">👑 <b>Vua Hồ Cá: {arena.state.kingName}</b> • </span>)}
-          ⚔️ <b>Gõ "pvp": Lên đài</b> • 👋 <b>Vào xem: Nhận 1 Linh Ngư</b> • 💬 <b>Gõ "size": Soi Cảnh Giới Tu Tiên</b> • 🥖 <b>Bình luận: Ban linh đan</b> • ⚠️ <b>Đói lâu bị câu mất!</b>
+      {/* 6. Guidance Bar (Transparent, placed at the top, compact on mobile) */}
+      <div className="live-top-guidance-dock">
+        <div className="live-instruction-marquee">
+          <div className="live-instruction-track">
+            <div className="live-instruction-content">
+              {arena && arena.state.kingName && (
+                <span className="king-title-pill">👑 <b>Vua Hồ Cá: {arena.state.kingName}</b> • </span>
+              )}
+              <span>⚔️ <b>Gõ "pvp": Lên đài</b></span>
+              <span className="sep">•</span>
+              <span>🎁 <b>Gõ "bơi": Săn rương</b></span>
+              <span className="sep">•</span>
+              <span>💬 <b>Gõ "size": Soi cảnh giới</b></span>
+              <span className="sep">•</span>
+              <span>🥖 <b>Bình luận: Cho ăn</b></span>
+              <span className="sep">•</span>
+              <span>👋 <b>Vào xem: Nhận cá</b></span>
+              <span className="sep">•</span>
+              <span>⚠️ <b>Đói lâu bị câu mất!</b></span>
+            </div>
+            <div className="live-instruction-content" aria-hidden="true">
+              {arena && arena.state.kingName && (
+                <span className="king-title-pill">👑 <b>Vua Hồ Cá: {arena.state.kingName}</b> • </span>
+              )}
+              <span>⚔️ <b>Gõ "pvp": Lên đài</b></span>
+              <span className="sep">•</span>
+              <span>🎁 <b>Gõ "bơi": Săn rương</b></span>
+              <span className="sep">•</span>
+              <span>💬 <b>Gõ "size": Soi cảnh giới</b></span>
+              <span className="sep">•</span>
+              <span>🥖 <b>Bình luận: Cho ăn</b></span>
+              <span className="sep">•</span>
+              <span>👋 <b>Vào xem: Nhận cá</b></span>
+              <span className="sep">•</span>
+              <span>⚠️ <b>Đói lâu bị câu mất!</b></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
