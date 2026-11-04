@@ -1778,7 +1778,13 @@ input[type="color"] {
   padding: 2px 7px 2px 4px;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.2s, background 0.2s, padding 0.25s ease;
+  transition: border-color 0.2s, background 0.2s, padding 0.25s ease, border-radius 0.25s ease;
+}
+
+.fish-owner-pill.avatar-only {
+  padding: 2px;
+  border-radius: 50%;
+  gap: 0;
 }
 
 .fish-owner-pill.pill-danger {

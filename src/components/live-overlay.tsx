@@ -197,7 +197,11 @@ export function LiveOverlay({
               )}
 
               {/* Owner Avatar & Name Pill */}
-              <div className={`fish-owner-pill ${isDanger ? "pill-danger" : ""}`}>
+              <div
+                className={`fish-owner-pill ${isDanger ? "pill-danger" : ""} ${
+                  fish.nameVisibleTimer <= 0 ? "avatar-only" : ""
+                }`}
+              >
                 {fish.ownerAvatar ? (
                   <img
                     src={fish.ownerAvatar}
@@ -211,27 +215,6 @@ export function LiveOverlay({
                 )}
                 {fish.nameVisibleTimer > 0 && (
                   <span className="fish-owner-name">{fish.ownerName}</span>
-                )}
-                {fish.isDragon ? (
-                  <span
-                    className="fish-size-pill dragon-tag"
-                    style={{
-                      background: "linear-gradient(135deg, #f59e0b, #ef4444)",
-                      color: "#fff",
-                      borderColor: "#fbbf24",
-                      boxShadow: "0 0 8px rgba(245, 158, 11, 0.7)",
-                      fontWeight: 700,
-                    }}
-                  >
-                    🐉 {fish.sizeCm}cm • Chân Long
-                  </span>
-                ) : (
-                  <span
-                    className="fish-size-pill tu-tien-tag"
-                    style={{ borderColor: fish.tuTien.auraColor }}
-                  >
-                    {fish.sizeCm}cm
-                  </span>
                 )}
               </div>
 
