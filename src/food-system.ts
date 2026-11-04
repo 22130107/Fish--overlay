@@ -73,9 +73,9 @@ export class FoodSystem {
             fish.hunger = 100;
             fish.eatCount += 1;
             // Visually grow fish body with eating
-            const growthFactor = 1 + Math.min(1.2, fish.eatCount * 0.015);
-            fish.bodyLength = (fish.isDragon ? 34 : 18) * growthFactor;
-            fish.bodyWidth = fish.bodyLength * (fish.isDragon ? 0.32 : 0.22);
+            const growthFactor = 1 + Math.min(0.9, fish.eatCount * 0.015);
+            fish.bodyLength = 18 * growthFactor;
+            fish.bodyWidth = fish.bodyLength * 0.22;
           }
 
           // Spawn floating text alert
