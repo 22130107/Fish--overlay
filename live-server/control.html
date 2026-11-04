@@ -205,6 +205,21 @@
           <div style="margin-bottom: 4px;"><b>Đạo hữu:</b> <span id="tribOwner">-</span> (<span id="tribCm">72</span>cm)</div>
           <div><b>Lực Hộ Pháp:</b> <span id="tribPower">0</span> / <span id="tribRequired">40</span></div>
         </div>
+      <!-- PVP Arena Testing Card -->
+      <div class="card" style="border-color: #ef4444;">
+        <h2 style="color: #f87171; display: flex; align-items: center; justify-content: space-between;">
+          <span>⚔️ Thử Nghiệm Võ Đài Thần Ngư (PVP Sumo 1vs1)</span>
+        </h2>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+          Mô phỏng 2 khán giả gõ "pvp" lên đài, bầy cá quây vòng tròn, húc đẩy và cá thắng nuốt trọn cá thua.
+        </p>
+        <div class="btn-group" style="margin-bottom: 12px;">
+          <button class="gold" onclick="testPvp1()">🥋 Người 1 gõ "pvp" (Lên đài chờ)</button>
+          <button class="danger" onclick="testPvp2()">⚔️ Người 2 gõ "pvp" (Vào trận)</button>
+          <button class="secondary" onclick="testCheer1()">🔥 Người 1 gõ "huc"</button>
+          <button class="secondary" onclick="testCheer2()">🔥 Người 2 gõ "huc"</button>
+          <button class="gold" onclick="testPvpGift()">🌹 Tặng quà Người 1 (+15 lực)</button>
+        </div>
       </div>
     </div>
 
@@ -386,6 +401,22 @@
       const targetId = Math.max(1, nextUserId - 1);
       const name = DEMO_NAMES[targetId % DEMO_NAMES.length] + ' ' + targetId;
       ws.send(JSON.stringify({ cmd: 'chat', id: 'user_' + targetId, name, text: 'Thả mồi cho cá ăn nè!' }));
+    }
+
+    function testPvp1() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Chiến Thần Long', text: 'pvp' }));
+    }
+    function testPvp2() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Độc Cô Cầu Bại', text: 'pvp' }));
+    }
+    function testCheer1() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Chiến Thần Long', text: 'huc manh len!' }));
+    }
+    function testCheer2() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Độc Cô Cầu Bại', text: 'day no ra ngoai!' }));
+    }
+    function testPvpGift() {
+      ws.send(JSON.stringify({ cmd: 'gift', name: 'Chiến Thần Long', gift: 'Hoa hồng', count: 5, diamonds: 5 }));
     }
 
     function testQuerySize() {
