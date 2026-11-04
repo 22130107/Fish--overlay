@@ -5,6 +5,8 @@ import { vec } from "./math";
 import { settings } from "./settings/store";
 import type { WeatherPresetId } from "./weather";
 import { TribulationManager } from "./tribulation-manager";
+import { PvpArenaManager } from "./pvp-arena-manager";
+import type { PvpArenaState } from "./pvp-arena-types";
 import type { TribulationState } from "./tribulation-types";
 
 export interface TopDonor {
@@ -38,6 +40,7 @@ export interface LiveStreamState {
   currentGift: GiftAlert | null;
   latestEvent: EventAlert | null;
   tribulation?: TribulationState | null;
+  arena?: PvpArenaState | null;
 }
 
 export class LiveClient {
@@ -52,6 +55,7 @@ export class LiveClient {
   };
 
   public tribulation = new TribulationManager();
+  public arena = new PvpArenaManager();
 
   private ws: WebSocket | null = null;
   private audioEl: HTMLAudioElement | null = null;
@@ -89,7 +93,16 @@ export class LiveClient {
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
 
-    // Wire up school events
+        // Wire up school events
+    this.school.arena = this.arena;
+    this.arena.onEvent = (evt) => {
+      this.pushEventAlert(
+        evt.text,
+        evt.type === "knockout" || evt.type === "eat" ? "hook" : "info"
+      );
+      this.queueTTS({ text: evt.text });
+      this.notify();
+    };
     this.school.onViewerSpawned = (name) => {
       this.pushEventAlert(`✨ ${name} vừa vào hồ và nhận 1 chú cá!`, "spawn");
     };
@@ -476,6 +489,16 @@ export class LiveClient {
           fish.hungerTimeLeft = fish.maxHungerTime;
           fish.state = 3; // burst of excitement
         }
+
+        const comment = (msg.comment || msg.text || "").trim().toLowerCase();
+        if (comment === "pvp" || comment === "!pvp" || comment.startsWith("pvp ")) {
+          this.arena.registerChallenger(id, name, avatar);
+        }
+        if (this.arena.isActive) {
+          if (/^(huc|day|push|1|chien|len)$/i.test(comment) || comment.includes("huc") || comment.includes("day")) {
+            this.arena.addCheerPower(name, 2);
+          }
+        }
         this.refreshFishNameTimer(id, name);
         break;
       }
@@ -486,6 +509,9 @@ export class LiveClient {
           msg.y ? (msg.y / 270) * CANVAS_HEIGHT : CANVAS_HEIGHT * 0.5,
         );
         this.school.ripples.trigger("touch", point);
+        if (this.arena.isActive && (msg.user || msg.id)) {
+          this.arena.addCheerPower(msg.user || msg.id, 1);
+        }
         this.refreshFishNameTimer(msg.id || msg.user, msg.user);
         break;
       }
@@ -517,6 +543,10 @@ export class LiveClient {
           donorFish.hungerTimeLeft = donorFish.maxHungerTime;
         }
         this.refreshFishNameTimer(msg.id || msg.user, msg.user);
+
+        if (this.arena.isActive && msg.user) {
+          this.arena.addCheerPower(msg.user, Math.max(1, coins) * 3);
+        }
 
         // Update donors
         if (msg.topDonors) {
