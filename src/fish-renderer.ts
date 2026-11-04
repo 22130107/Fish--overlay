@@ -685,8 +685,9 @@ export class FishRenderer {
     } else {
       if (this.lightning.getFlashAlpha() > 0) {
         this.lightning.renderFlash(ctx, dt);
-      } else {
-        this.lightning.clear();
+      }
+      if (this.lightning.getBolts().length > 0) {
+        this.lightning.updateAndRenderBolts(ctx, dt);
       }
     }
   }

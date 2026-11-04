@@ -130,6 +130,22 @@ describe("LightningEffect", () => {
     expect(onStrike).toHaveBeenCalledTimes(1);
     expect(lightning.getBolts().length).toBe(1);
   });
+
+  it("should update and render active bolts independently without tribulation loop", () => {
+    const lightning = new LightningEffect();
+    const ctx = createMockCtx();
+    const target = { x: 200, y: 300 };
+    lightning.spawnBolt(target, 95);
+    expect(lightning.getBolts().length).toBe(1);
+
+    lightning.updateAndRenderBolts(ctx, 0.05);
+    expect(lightning.getBolts().length).toBe(1);
+    expect(lightning.getBolts()[0].life).toBeLessThan(0.25);
+
+    // After remaining lifetime expires
+    lightning.updateAndRenderBolts(ctx, 0.3);
+    expect(lightning.getBolts().length).toBe(0);
+  });
 });
 
 describe("Koi aura states", () => {

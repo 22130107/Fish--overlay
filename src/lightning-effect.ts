@@ -36,6 +36,10 @@ export class LightningEffect {
     this.renderFlash(ctx, dt);
 
     // Render & update active bolts
+    this.updateAndRenderBolts(ctx, dt);
+  }
+
+  public updateAndRenderBolts(ctx: CanvasRenderingContext2D, dt: number): void {
     ctx.save();
     for (const bolt of this.bolts) {
       bolt.life -= dt;
