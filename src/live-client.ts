@@ -123,7 +123,7 @@ export class LiveClient {
       this.notify();
     };
     this.school.onViewerSpawned = (name) => {
-      this.pushEventAlert(`✨ ${name} vừa vào hồ và nhận 1 chú cá!`, "spawn");
+      this.pushEventAlert(`✨ ${name} đã bình luận và nhận 1 chú cá Koi!`, "spawn");
     };
 
     this.school.onFishHooked = (name) => {
@@ -383,13 +383,8 @@ export class LiveClient {
         break;
 
       case "join": {
-        const id = msg.id || msg.user;
-        const name = msg.user || "Khán giả";
-        const avatar = msg.avatar || "";
-        const fish = this.school.spawnFishForViewer(id, name, avatar);
-        if (fish) {
-          this.school.ripples.trigger("touch", fish.position);
-        }
+        // Viewers entering the room no longer automatically spawn a fish.
+        // They must comment (chat) or send gifts to receive a fish.
         break;
       }
 
@@ -400,16 +395,13 @@ export class LiveClient {
         let fish = this.school.fish
           .slice(0, this.school.count)
           .find((f) => f.ownerId === id || (f.ownerName && f.ownerName.toLowerCase() === name.toLowerCase()));
-        if (!fish) {
-          fish = this.school.spawnFishForViewer(id, name, avatar);
-        }
         if (fish) {
           fish.hunger = 100;
           fish.hungerTimeLeft = fish.maxHungerTime;
           fish.state = 3;
+          this.refreshFishNameTimer(id, name);
         }
         this.pushEventAlert(`🚀 ${name} vừa chia sẻ phiên Live!`, "info");
-        this.refreshFishNameTimer(id, name);
         // Drop bonus 5 pellets to celebrate share!
         for (let i = 0; i < 5; i++) {
           const rx = 40 + Math.random() * (CANVAS_WIDTH - 80);
@@ -423,19 +415,15 @@ export class LiveClient {
       case "follow": {
         const id = msg.id || msg.user;
         const name = msg.user || "Khán giả";
-        const avatar = msg.avatar || "";
         let fish = this.school.fish
           .slice(0, this.school.count)
           .find((f) => f.ownerId === id || (f.ownerName && f.ownerName.toLowerCase() === name.toLowerCase()));
-        if (!fish) {
-          fish = this.school.spawnFishForViewer(id, name, avatar);
-        }
         if (fish) {
           fish.hunger = 100;
           fish.hungerTimeLeft = fish.maxHungerTime;
+          this.refreshFishNameTimer(id, name);
         }
         this.pushEventAlert(`❤️ ${name} vừa theo dõi kênh!`, "info");
-        this.refreshFishNameTimer(id, name);
         break;
       }
 
