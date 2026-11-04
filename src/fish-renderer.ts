@@ -576,11 +576,7 @@ export class FishRenderer {
       const targetAppearance = this.depthAppearances[appearanceIndex];
       targetAppearance.pattern = sourceAppearance.pattern;
       this.updateDepthAppearance(fish, sourceAppearance, targetAppearance);
-      if (fish.isDragon) {
-        this.drawEasternDragon(fish, targetAppearance);
-      } else {
-        this.drawKoi(fish, targetAppearance);
-      }
+      this.drawKoi(fish, targetAppearance);
       if (showDebug) this.drawDebug(fish, targetAppearance);
     }
 
@@ -650,13 +646,9 @@ export class FishRenderer {
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // 1. Dragon aura and smoke particles on fish
+    // 1. Smoke particles on fish
     for (let index = 0; index < school.count; index += 1) {
       const fish = school.fish[index];
-      const hasDragonAura = fish.tribulationAura === "dragon" || fish.sizeCm >= 82;
-      if (hasDragonAura) {
-        this.renderDragonAura(ctx, fish, time);
-      }
       if (fish.tribulationAura === "smoke" && fish.smokeTimer > 0) {
         this.renderFishSmoke(ctx, fish, dt);
       }
@@ -719,7 +711,7 @@ export class FishRenderer {
         fromAngle(fish.heading),
       );
       const normal = perpendicular(tangent);
-      const halfWidth = (fish.isDragon ? this.dragonWidthAt(fish, node) : this.widthAt(fish, node)) * hookScale;
+      const halfWidth = this.widthAt(fish, node) * hookScale;
       const spinePos = add(fish.renderSpine[node], vec(0, hookLift));
       left[node] = add(spinePos, mul(normal, halfWidth));
       right[node] = add(spinePos, mul(normal, -halfWidth));
@@ -730,13 +722,8 @@ export class FishRenderer {
       fromAngle(fish.heading),
     );
     const headNormal = perpendicular(headForward);
-    const noseCenter = add(
-      fish.renderSpine[0],
-      mul(headForward, fish.bodyWidth * (fish.isDragon ? 0.52 : 0.43)),
-    );
-    const noseHalfWidth =
-      (fish.isDragon ? this.dragonWidthAt(fish, 0) : this.widthAt(fish, 0)) *
-      (fish.isDragon ? 0.78 : 0.72);
+    const noseCenter = add(fish.renderSpine[0], mul(headForward, fish.bodyWidth * 0.43));
+    const noseHalfWidth = this.widthAt(fish, 0) * 0.72;
     const noseLeft = add(noseCenter, mul(headNormal, noseHalfWidth));
     const noseRight = add(noseCenter, mul(headNormal, -noseHalfWidth));
 
