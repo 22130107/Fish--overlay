@@ -221,7 +221,22 @@
           <button class="gold" onclick="testPvpGift()">🌹 Tặng quà Người 1 (+15 lực)</button>
         </div>
       </div>
-    </div>
+          </div>
+
+      <!-- Mystery Treasure Chest Testing Card -->
+      <div class="card" style="border-color: #f59e0b;">
+        <h2 style="color: #fbbf24; display: flex; align-items: center; justify-content: space-between;">
+          <span>🎁 Thử Nghiệm Rương Báu Thủy Cung</span>
+        </h2>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+          Thả rương báu gacha xuống đáy hồ (40% Tăng Trưởng +3cm, 25% Hào Quang Neon, 20% Khiên Kim Cương PVP, 15% Bom Tí Hon).
+        </p>
+        <div class="btn-group" style="margin-bottom: 12px;">
+          <button class="gold" onclick="testSpawnChest()">🎁 Thả Rương Báu Ngay</button>
+          <button class="secondary" onclick="testBoiRush1()">🚀 Người 1 gõ "bơi"</button>
+          <button class="secondary" onclick="testBoiRush2()">🚀 Người 2 gõ "nhanh"</button>
+        </div>
+      </div>
 
     <!-- Top Donors -->
     <div class="card">
@@ -417,6 +432,16 @@
     }
     function testPvpGift() {
       ws.send(JSON.stringify({ cmd: 'gift', name: 'Chiến Thần Long', gift: 'Hoa hồng', count: 5, diamonds: 5 }));
+    }
+
+    function testSpawnChest() {
+      ws.send(JSON.stringify({ cmd: 'spawn_chest' }));
+    }
+    function testBoiRush1() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Chiến Thần Long', text: 'bơi' }));
+    }
+    function testBoiRush2() {
+      ws.send(JSON.stringify({ cmd: 'chat', name: 'Độc Cô Cầu Bại', text: 'nhanh' }));
     }
 
     function testQuerySize() {

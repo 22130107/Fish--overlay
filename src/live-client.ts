@@ -6,6 +6,8 @@ import { settings } from "./settings/store";
 import type { WeatherPresetId } from "./weather";
 import { TribulationManager } from "./tribulation-manager";
 import { PvpArenaManager } from "./pvp-arena-manager";
+import { SwimState } from "./koi";
+import { TreasureSystem } from "./treasure-system";
 import type { PvpArenaState } from "./pvp-arena-types";
 import type { TribulationState } from "./tribulation-types";
 
@@ -56,6 +58,7 @@ export class LiveClient {
 
   public tribulation = new TribulationManager();
   public arena = new PvpArenaManager();
+  public treasureSystem = new TreasureSystem();
 
   private ws: WebSocket | null = null;
   private audioEl: HTMLAudioElement | null = null;
@@ -105,6 +108,12 @@ export class LiveClient {
 
         // Wire up school events
     this.school.arena = this.arena;
+    this.school.treasureSystem = this.treasureSystem;
+    this.treasureSystem.onEvent = (evt) => {
+      this.pushEventAlert(evt.text, "size");
+      this.send({ cmd: "say", text: evt.text });
+      this.notify();
+    };
     this.arena.onEvent = (evt) => {
       this.pushEventAlert(
         evt.text,
@@ -341,6 +350,10 @@ export class LiveClient {
 
   private handleMessage(msg: any): void {
     switch (msg.t) {
+      case "spawn_chest":
+        this.treasureSystem.spawnChest();
+        break;
+
       case "state":
         if (msg.tiktok) {
           this.state.tiktokConnected = msg.tiktok.status === "connected";
@@ -504,9 +517,16 @@ export class LiveClient {
         if (comment === "pvp" || comment === "!pvp" || comment.startsWith("pvp ")) {
           this.arena.registerChallenger(id, name, avatar);
         }
-        if (this.arena.isActive) {
+                if (this.arena.isActive) {
           if (/^(huc|day|push|1|chien|len)$/i.test(comment) || comment.includes("huc") || comment.includes("day")) {
             this.arena.addCheerPower(name, 2);
+          }
+        }
+        if (/(boi|bơi|nhanh|rush|speed|chay)/i.test(comment)) {
+          if (fish) {
+            fish.state = SwimState.Burst;
+            fish.speed = fish.maximumSpeed * 1.35;
+            fish.nameVisibleTimer = 5.0;
           }
         }
         this.refreshFishNameTimer(id, name);
@@ -556,6 +576,10 @@ export class LiveClient {
 
         if (this.arena.isActive && msg.user) {
           this.arena.addCheerPower(msg.user, Math.max(1, coins) * 3);
+        }
+
+        if (coins >= 10 && !this.treasureSystem.activeChest) {
+          this.treasureSystem.spawnChest();
         }
 
         // Update donors

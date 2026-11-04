@@ -403,7 +403,7 @@ function handleChat(id, name, text, avatar) {
 
   // Speak chat comment with AI voice (Lọc bỏ spam)!
   if (settings.readChat) {
-    if (/^(pvp|!pvp|huc|day|push|1)$/i.test(text.trim())) return;
+    if (/^(pvp|!pvp|huc|day|push|1|boi|bơi|nhanh|rush|speed|chay)$/i.test(text.trim())) return;
     const spamCheck = isCommentSpam(id, text, false);
     if (!spamCheck.spam) {
       const spokenName = String(name).replace(/[_@.]+/g, ' ').replace(/[^\p{L}\p{N}\s]/gu, '').trim() || 'Khán giả';
@@ -1175,6 +1175,10 @@ wss.on('connection', (ws, req) => {
     try {
       const msg = JSON.parse(data.toString());
       switch (msg.cmd) {
+        case 'spawn_chest':
+          addLog('🎁 Admin thả Rương Báu Thủy Cung');
+          broadcast({ t: 'spawn_chest' });
+          break;
         case 'connect':
           connectTikTok(msg.uniqueId);
           break;
