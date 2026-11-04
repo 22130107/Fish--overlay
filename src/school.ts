@@ -57,20 +57,21 @@ export class School {
     if (existing) return existing;
 
     let targetIndex = -1;
-    if (this.count < MAX_FISH) {
-      targetIndex = this.count;
-      this.count += 1;
-    } else {
-      for (let i = 1; i < this.count; i++) {
-        if (!this.fish[i].ownerId) {
-          targetIndex = i;
-          break;
-        }
+    for (let i = 0; i < this.count; i++) {
+      if (!this.fish[i].ownerId) {
+        targetIndex = i;
+        break;
       }
-      if (targetIndex === -1) {
+    }
+
+    if (targetIndex === -1) {
+      if (this.count < MAX_FISH) {
+        targetIndex = this.count;
+        this.count += 1;
+      } else {
         let minHunger = Infinity;
-        let minIdx = 1;
-        for (let i = 1; i < this.count; i++) {
+        let minIdx = 0;
+        for (let i = 0; i < this.count; i++) {
           if (this.fish[i].hungerTimeLeft < minHunger) {
             minHunger = this.fish[i].hungerTimeLeft;
             minIdx = i;

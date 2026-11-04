@@ -518,7 +518,7 @@ export function App() {
     if (!canvas || !display) return;
     const initialSize = pondRenderSize(display, mobileViewRef.current);
     setCanvasSize(initialSize.width, initialSize.height);
-    const isLive = new URLSearchParams(window.location.search).get("live") === "1";
+    const isLive = new URLSearchParams(window.location.search).get("live") === "1" || new URLSearchParams(window.location.search).get("mobile") === "1" || window.location.port === "3001";
     const school = new School(isLive ? 1 : FISH.initialCount);
     const renderer = new FishRenderer(canvas);
     (school as any).fishRenderer = renderer;
