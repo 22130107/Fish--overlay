@@ -1,62 +1,83 @@
 import { describe, it, expect } from "vitest";
-
-export function isDragonFish(fish) {
-  return Boolean(fish && (Number(fish.sizeCm) >= 82.0 || fish.passed82));
-}
-
-export function handleWeatherAuth(fish) {
-  if (!isDragonFish(fish)) {
-    return { allowed: false, reason: "Chưa đạt cảnh giới Hóa Long (cần >= 82cm)" };
-  }
-  return { allowed: true };
-}
-
-export function handleThunderAuth(fish, lastThunderTime, now = Date.now()) {
-  if (!isDragonFish(fish)) {
-    return { allowed: false, reason: "Chưa đạt cảnh giới Hóa Long" };
-  }
-  if (now - (lastThunderTime || 0) < 15000) {
-    return { allowed: false, reason: "Thiên Lôi đang hồi chiêu (15 giây)" };
-  }
-  return { allowed: true };
-}
-
-export const THIEN_LOI_KEYWORDS = [
-  'thiên lôi', 'thien loi', 'sấm sét', 'sam set', 'gọi sét', 'goi set',
-  'lôi phạt', 'loi phat', 'sét đánh', 'set danh', 'sét', 'lôi giáng'
-];
+import {
+  isDragonFish,
+  checkWeatherAuth,
+  checkThunderCooldown,
+  THIEN_LOI_KEYWORDS,
+} from "./dragon-control.mjs";
+import {
+  calculateTuTienRank,
+  getTuTienVoiceLine,
+} from "./tu-tien.mjs";
 
 describe("Server Dragon Permissions and Cooldown", () => {
   it("should deny weather control for non-dragon fish (< 82cm)", () => {
     const normalFish = { id: "u1", sizeCm: 45.0, passed82: false };
-    expect(handleWeatherAuth(normalFish).allowed).toBe(false);
-    expect(handleWeatherAuth(normalFish).reason).toContain("Chưa đạt cảnh giới Hóa Long");
+    const auth = checkWeatherAuth(normalFish);
+    expect(auth.allowed).toBe(false);
+    expect(auth.reason).toContain("Chưa đạt cảnh giới Hóa Long");
   });
 
   it("should allow weather control for dragon fish (>= 82cm or passed82)", () => {
     const dragonFish1 = { id: "u2", sizeCm: 82.0, passed82: false };
     const dragonFish2 = { id: "u3", sizeCm: 75.0, passed82: true };
     const dragonFish3 = { id: "u4", sizeCm: "85.0", passed82: false };
-    expect(handleWeatherAuth(dragonFish1).allowed).toBe(true);
-    expect(handleWeatherAuth(dragonFish2).allowed).toBe(true);
-    expect(handleWeatherAuth(dragonFish3).allowed).toBe(true);
+    expect(checkWeatherAuth(dragonFish1).allowed).toBe(true);
+    expect(checkWeatherAuth(dragonFish2).allowed).toBe(true);
+    expect(checkWeatherAuth(dragonFish3).allowed).toBe(true);
   });
 
-  it("should deny weather and thunder control for null or undefined fish", () => {
-    expect(handleWeatherAuth(null).allowed).toBe(false);
-    expect(handleWeatherAuth(undefined).allowed).toBe(false);
-    expect(handleThunderAuth(null, 0).allowed).toBe(false);
-    expect(handleThunderAuth(undefined, 0).allowed).toBe(false);
+  it("should deny weather control for null or undefined fish", () => {
+    expect(checkWeatherAuth(null).allowed).toBe(false);
+    expect(checkWeatherAuth(undefined).allowed).toBe(false);
+    expect(isDragonFish(null)).toBe(false);
+    expect(isDragonFish(undefined)).toBe(false);
   });
 
   it("should enforce 15s cooldown on thunder summon", () => {
-    const dragonFish = { id: "u2", sizeCm: 85.0, passed82: true };
+    const userLastThunder = new Map();
+    const id = "dragon_user";
     const t0 = 100000;
-    expect(handleThunderAuth(dragonFish, 0, t0).allowed).toBe(true);
-    expect(handleThunderAuth(dragonFish, t0, t0 + 5000).allowed).toBe(false);
-    expect(handleThunderAuth(dragonFish, t0, t0 + 14999).allowed).toBe(false);
-    expect(handleThunderAuth(dragonFish, t0, t0 + 15000).allowed).toBe(true);
-    expect(handleThunderAuth(dragonFish, t0, t0 + 20000).allowed).toBe(true);
+
+    const res0 = checkThunderCooldown(id, userLastThunder, t0);
+    expect(res0.allowed).toBe(true);
+    expect(userLastThunder.get(id)).toBe(t0);
+
+    const res1 = checkThunderCooldown(id, userLastThunder, t0 + 5000);
+    expect(res1.allowed).toBe(false);
+    expect(res1.waitSec).toBe(10);
+    expect(res1.reason).toContain("Thiên Lôi đang hồi chiêu");
+
+    const res2 = checkThunderCooldown(id, userLastThunder, t0 + 14999);
+    expect(res2.allowed).toBe(false);
+    expect(res2.waitSec).toBe(1);
+
+    const res3 = checkThunderCooldown(id, userLastThunder, t0 + 15000);
+    expect(res3.allowed).toBe(true);
+    expect(userLastThunder.get(id)).toBe(t0 + 15000);
+
+    const res4 = checkThunderCooldown(id, userLastThunder, t0 + 20000);
+    expect(res4.allowed).toBe(false);
+    expect(res4.waitSec).toBe(10);
+
+    const res5 = checkThunderCooldown(id, userLastThunder, t0 + 30000);
+    expect(res5.allowed).toBe(true);
+    expect(userLastThunder.get(id)).toBe(t0 + 30000);
+  });
+
+  it("should evict oldest entry when userLastThunder exceeds 500 entries", () => {
+    const userLastThunder = new Map();
+    for (let i = 0; i <= 500; i++) {
+      userLastThunder.set(`user_${i}`, 1000 + i);
+    }
+    expect(userLastThunder.size).toBe(501);
+    expect(userLastThunder.has("user_0")).toBe(true);
+
+    const res = checkThunderCooldown("user_new", userLastThunder, 200000);
+    expect(res.allowed).toBe(true);
+    expect(userLastThunder.has("user_0")).toBe(false);
+    expect(userLastThunder.has("user_new")).toBe(true);
+    expect(userLastThunder.size).toBe(501);
   });
 
   it("should match all expected keywords for Thiên Lôi command", () => {
@@ -72,7 +93,7 @@ describe("Server Dragon Permissions and Cooldown", () => {
       "sét đánh chết nó",
       "set danh di",
       "triệu hồi sét",
-      "lôi giáng cửu thiên"
+      "lôi giáng cửu thiên",
     ];
 
     for (const chat of sampleChats) {
@@ -80,5 +101,23 @@ describe("Server Dragon Permissions and Cooldown", () => {
       const matched = THIEN_LOI_KEYWORDS.some((kw) => lower.includes(kw));
       expect(matched).toBe(true);
     }
+  });
+});
+
+describe("Tu Tien Live-Server Rank and Voice Line", () => {
+  it("should assert calculateTuTienRank contains weather and lightning in desc for >= 82cm", () => {
+    const rank = calculateTuTienRank(82.0);
+    expect(rank.fullName).toBe("Phi Thăng Hóa Long");
+    expect(rank.desc).toBe(
+      "Cá chép vượt long môn, đắc đạo thành Chân Long phi thăng tiên giới, hô mưa gọi gió, chưởng quản thời tiết và thiên lôi."
+    );
+  });
+
+  it("should assert getTuTienVoiceLine announces weather and lightning command for >= 82cm", () => {
+    const rank = calculateTuTienRank(85.0);
+    const line = getTuTienVoiceLine("Lâm Động", 85.0, rank, 130);
+    expect(line).toBe(
+      "Kính báo thiên hạ! Linh ngư của đạo hữu Lâm Động đã đạt tám mươi lăm xăng ti mét, đắc đạo cảnh giới Phi Thăng Hóa Long, cá chép vượt Vũ Môn hóa thành Chân Long thượng giới, chưởng quản thời tiết và hiệu triệu thiên lôi!"
+    );
   });
 });

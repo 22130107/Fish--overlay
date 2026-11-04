@@ -718,7 +718,6 @@ export class LiveClient {
           `⚡ THÁI CỔ CHÂN LONG ${name} HIỆU TRIỆU THIÊN LÔI GIÁNG LÂM! ⚡`,
           "size"
         );
-        this.notify();
         break;
       }
 

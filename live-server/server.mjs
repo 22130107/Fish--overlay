@@ -6,6 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { calculateTuTienRank, getTuTienVoiceLine, formatNumberToVietnamese } from './tu-tien.mjs';
+import {
+  isDragonFish,
+  checkWeatherAuth,
+  checkThunderCooldown,
+  THIEN_LOI_KEYWORDS,
+} from './dragon-control.mjs';
+export { isDragonFish };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TTS_DIR = path.join(__dirname, 'tts');
@@ -108,14 +115,7 @@ const SCATTER_KEYWORDS = ['chạy', 'chay', 'bien', 'biến', 'tản', 'tan', 's
 
 const userLastThunder = new Map(); // id -> timestamp
 
-export function isDragonFish(f) {
-  return Boolean(f && (Number(f.sizeCm) >= 82.0 || f.passed82));
-}
 
-const THIEN_LOI_KEYWORDS = [
-  'thiên lôi', 'thien loi', 'sấm sét', 'sam set', 'gọi sét', 'goi set',
-  'lôi phạt', 'loi phat', 'sét đánh', 'set danh', 'sét', 'lôi giáng'
-];
 
 const seenUsers = new Set();
 const userChatHistory = new Map(); // id -> { lastText, lastChatTime, lastSizeTime }
@@ -294,8 +294,9 @@ function handleChat(id, name, text, avatar) {
       if (item.words.some((w) => lower.includes(w))) {
         if (currentTribulation) { return; } // Weather locked during tribulation
         
-        if (!isDragonFish(fish)) {
-          addLog(`⚠️ ${name} chưa đạt cảnh giới Hóa Long (${fish.sizeCm}cm < 82cm), chưa thể đổi thời tiết.`);
+        const weatherAuth = checkWeatherAuth(fish);
+        if (!weatherAuth.allowed) {
+          addLog(`⚠️ ${name} chưa đạt cảnh giới Hóa Long (${fish?.sizeCm || 0}cm < 82cm), chưa thể đổi thời tiết.`);
           return;
         }
 
@@ -326,14 +327,11 @@ function handleChat(id, name, text, avatar) {
       return;
     }
 
-    const now = Date.now();
-    const lastTime = userLastThunder.get(id) || 0;
-    if (now - lastTime < 15000) {
-      const waitSec = Math.ceil((15000 - (now - lastTime)) / 1000);
-      addLog(`⏳ ${name} gọi Thiên Lôi quá nhanh, cần hồi khí ${waitSec}s.`);
+    const thunderAuth = checkThunderCooldown(id, userLastThunder);
+    if (!thunderAuth.allowed) {
+      addLog(`⏳ ${name} gọi Thiên Lôi quá nhanh, cần hồi khí ${thunderAuth.waitSec}s.`);
       return;
     }
-    userLastThunder.set(id, now);
 
     addLog(`⚡ 🐉 Thái Cổ Chân Long ${name} triệu hoán Thiên Lôi giáng lâm!`);
     broadcast({ t: 'dragon_lightning', user: name, id: fish.id });
