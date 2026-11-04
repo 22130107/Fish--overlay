@@ -88,6 +88,7 @@ export class School {
     fish.fishHookProgress = 0;
     fish.eatCount = 0;
     fish.sizeAlertTimer = 0;
+    fish.nameVisibleTimer = 5.0;
     fish.bodyLength = 18;
     fish.bodyWidth = 18 * 0.22;
     fish.position = vec(
@@ -114,6 +115,7 @@ export class School {
     removedFish.fishHookProgress = 0;
     removedFish.eatCount = 0;
     removedFish.sizeAlertTimer = 0;
+    removedFish.nameVisibleTimer = 0;
     removedFish.hunger = 100;
     removedFish.maxHungerTime = FISH_MAX_HUNGER_TIME;
     removedFish.hungerTimeLeft = FISH_MAX_HUNGER_TIME;
@@ -262,6 +264,9 @@ export class School {
 
       if (fish.sizeAlertTimer > 0) {
         fish.sizeAlertTimer = Math.max(0, fish.sizeAlertTimer - dt);
+      }
+      if (fish.nameVisibleTimer > 0) {
+        fish.nameVisibleTimer = Math.max(0, fish.nameVisibleTimer - dt);
       }
 
       // Hunger & Fishing mechanics for viewer-owned fish

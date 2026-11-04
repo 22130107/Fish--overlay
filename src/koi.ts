@@ -58,6 +58,7 @@ export class Koi {
   public customAppearance: (FishAppearance & { name?: string }) | null = null;
   public eatCount = 0;
   public sizeAlertTimer = 0;
+  public nameVisibleTimer = 0;
   public passedTribulation72 = false;
   public passedTribulation82 = false;
   public tribulationAura: "dragon" | "smoke" | null = null;
@@ -161,6 +162,7 @@ export class Koi {
     this.customAppearance = null;
     this.eatCount = 0;
     this.sizeAlertTimer = 0;
+    this.nameVisibleTimer = 0;
     this.passedTribulation72 = false;
     this.passedTribulation82 = false;
     this.tribulationAura = null;
