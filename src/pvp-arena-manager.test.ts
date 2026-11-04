@@ -94,4 +94,25 @@ describe("PvpArenaManager", () => {
     const bobFish = school.fish.slice(0, school.count).find((f) => f.ownerId === "user2");
     expect(bobFish).toBeUndefined();
   });
+
+  it("coordinates school update and spectator fish steering when arena is active", () => {
+    const arena = new PvpArenaManager();
+    const school = new School();
+    school.arena = arena;
+
+    const fish1 = school.spawnFishForViewer("user1", "Alice", "alice.png");
+    const fish2 = school.spawnFishForViewer("user2", "Bob", "bob.png");
+    const spectator = school.spawnFishForViewer("user3", "Charlie", "charlie.png");
+
+    arena.registerChallenger("user1", "Alice", "alice.png");
+    arena.registerChallenger("user2", "Bob", "bob.png");
+
+    // During summon & fighting, school.update(dt, time) calls arena.update
+    school.update(3.2, 0);
+    expect(arena.state.phase).toBe("fighting");
+
+    // Run a step of school simulation
+    school.update(0.1, 0.1);
+    expect(spectator.speed).toBeGreaterThan(0);
+  });
 });

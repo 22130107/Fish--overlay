@@ -26,6 +26,7 @@ import {
 } from "./math";
 import { RippleSystem } from "./ripple-system";
 import type { TribulationState } from "./tribulation-types";
+import type { PvpArenaManager } from "./pvp-arena-manager";
 
 export class School {
   public readonly fish: Koi[] = Array.from({ length: MAX_FISH }, () => new Koi());
@@ -33,6 +34,7 @@ export class School {
   public readonly tinyFish = new TinyFishSchools();
 
   public tribulation: TribulationState | null = null;
+  public arena: PvpArenaManager | null = null;
   public count: number;
   public targetActive = false;
   public onFishHooked?: (userName: string) => void;
@@ -229,6 +231,9 @@ export class School {
   }
 
   public update(dt: number, time: number): void {
+    if (this.arena) {
+      this.arena.update(dt, this);
+    }
     this.targetAge += dt;
     if (
       this.targetActive &&
@@ -514,11 +519,44 @@ export class School {
       }
     }
 
+        if (this.arena && this.arena.isActive) {
+      const arenaState = this.arena.state;
+      const isFighter1 = arenaState.fighter1 && fish.ownerId === arenaState.fighter1.id;
+      const isFighter2 = arenaState.fighter2 && fish.ownerId === arenaState.fighter2.id;
+
+      if (isFighter1) {
+        const targetPos = vec(arenaState.center.x + (arenaState.fighter1?.offsetDistance ?? -25), arenaState.center.y);
+        const toTarget = sub(targetPos, fish.position);
+        return normalize(add(mul(toTarget, 0.25), vec(1.0, 0)), forward);
+      } else if (isFighter2) {
+        const targetPos = vec(arenaState.center.x + (arenaState.fighter2?.offsetDistance ?? 25), arenaState.center.y);
+        const toTarget = sub(targetPos, fish.position);
+        return normalize(add(mul(toTarget, 0.25), vec(-1.0, 0)), forward);
+      } else {
+        const toCenter = sub(arenaState.center, fish.position);
+        const dist = length(toCenter);
+        const radialPull = mul(normalize(toCenter, forward), (dist - arenaState.spectatorRadius) * 0.08);
+        const tangent = perpendicular(normalize(toCenter, forward));
+        const circularFlow = mul(tangent, 3.8);
+        steering = add(steering, add(radialPull, circularFlow));
+      }
+    }
+
     return normalize(steering, forward);
   }
 
   private desiredSpeedFor(index: number): number {
     const fish = this.fish[index];
+        if (this.arena && this.arena.isActive) {
+      const isFighter =
+        (this.arena.state.fighter1 && fish.ownerId === this.arena.state.fighter1.id) ||
+        (this.arena.state.fighter2 && fish.ownerId === this.arena.state.fighter2.id);
+      if (isFighter) {
+        return fish.maximumSpeed * 1.35;
+      }
+      return fish.cruiseSpeed * 1.25;
+    }
+
     const chaseDuration = FISH.callResponse.chaseBoostSeconds;
     const chasing =
       this.targetActive &&
