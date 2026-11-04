@@ -83,6 +83,13 @@ export class Koi {
     );
   }
 
+  public updateDimensions(): void {
+    const dragonMultiplier = this.isDragon ? 1.45 : 1.0;
+    const growthFactor = (1 + Math.min(0.9, this.eatCount * 0.015)) * dragonMultiplier;
+    this.bodyLength = 18 * growthFactor;
+    this.bodyWidth = this.bodyLength * 0.22;
+  }
+
   public constructor(index?: number, random?: XorShift32) {
     if (index !== undefined && random !== undefined) {
       this.reset(index, random);

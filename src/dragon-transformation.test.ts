@@ -37,4 +37,19 @@ describe("Koi isDragon state", () => {
     expect(fish.tribulationAura).toBe("dragon");
     expect(fish.isDragon).toBe(true);
   });
+
+  it("scales Thần Long body dimensions significantly larger than normal fish while preserving koi ratio", () => {
+    const normalFish = new Koi(0, new XorShift32(1234));
+    normalFish.eatCount = 120;
+    normalFish.updateDimensions();
+
+    const dragonFish = new Koi(0, new XorShift32(1234));
+    dragonFish.passedTribulation82 = true;
+    dragonFish.eatCount = 120;
+    dragonFish.updateDimensions();
+
+    expect(dragonFish.isDragon).toBe(true);
+    expect(dragonFish.bodyLength).toBeGreaterThan(normalFish.bodyLength * 1.35);
+    expect(dragonFish.bodyWidth).toBeCloseTo(dragonFish.bodyLength * 0.22, 2);
+  });
 });

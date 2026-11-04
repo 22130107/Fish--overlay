@@ -568,6 +568,9 @@ export class FishRenderer {
     for (let index = 0; index < school.count; index += 1) {
       if (previewIndex !== null && index !== selectedFishIndex) continue;
       const fish = school.fish[index];
+      if (fish.isDragon && fish.bodyLength < 45) {
+        fish.updateDimensions();
+      }
       this.buildRenderSpine(fish);
       const appearanceIndex = previewIndex ?? index;
       const sourceAppearance = (previewIndex === null && fish.customAppearance)

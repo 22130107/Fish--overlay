@@ -172,9 +172,7 @@ export class LiveClient {
           fish.passedTribulation72 = true;
           fish.tribulationAura = "dragon";
           fish.eatCount = Math.max(fish.eatCount, 130);
-          const growthFactor = 1 + Math.min(0.9, fish.eatCount * 0.015);
-          fish.bodyLength = 18 * growthFactor;
-          fish.bodyWidth = fish.bodyLength * 0.22;
+          fish.updateDimensions();
           (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
           this.school.ripples.trigger("touch", fish.position);
           const t1 = setTimeout(() => this.school.ripples.trigger("touch", fish.position), 150);
@@ -408,6 +406,7 @@ export class LiveClient {
           fish.hungerTimeLeft = fish.maxHungerTime;
           if (msg.eatCount !== undefined) {
             fish.eatCount = Math.max(fish.eatCount, msg.eatCount);
+            fish.updateDimensions();
           }
           fish.sizeAlertTimer = 7.0; // Show floating Tu Tiên talisman for 7 seconds
           fish.state = 3; // burst animation
@@ -623,9 +622,7 @@ export class LiveClient {
           dragonFish.tribulationAura = "dragon";
           dragonFish.hunger = 100;
           dragonFish.hungerTimeLeft = dragonFish.maxHungerTime;
-          const growthFactor = 1 + Math.min(0.9, dragonFish.eatCount * 0.015);
-          dragonFish.bodyLength = 18 * growthFactor;
-          dragonFish.bodyWidth = dragonFish.bodyLength * 0.22;
+          dragonFish.updateDimensions();
           (this.school as any).fishRenderer?.lightning?.triggerBurstFlash?.();
           this.school.ripples.trigger("touch", dragonFish.position);
           const t1 = setTimeout(() => this.school.ripples.trigger("touch", dragonFish.position), 150);

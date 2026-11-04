@@ -72,10 +72,8 @@ export class FoodSystem {
             fish.hungerTimeLeft = fish.maxHungerTime;
             fish.hunger = 100;
             fish.eatCount += 1;
-            // Visually grow fish body with eating
-            const growthFactor = 1 + Math.min(0.9, fish.eatCount * 0.015);
-            fish.bodyLength = 18 * growthFactor;
-            fish.bodyWidth = fish.bodyLength * 0.22;
+            // Visually grow fish body with eating (scaled larger for Thần Long)
+            fish.updateDimensions();
           }
 
           // Spawn floating text alert
